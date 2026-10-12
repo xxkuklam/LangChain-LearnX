@@ -125,7 +125,7 @@ def _():
             print("tokens:", response.usage_metadata["total_tokens"])
         except Exception as e:
             print(f"--- {name} -> error: {e}")
-    return (QUESTION,)
+    return QUESTION, init_chat_model
 
 
 @app.cell(hide_code=True)
@@ -190,6 +190,146 @@ def _(QUESTION):
 
     openrouter_response = openrouter_model.invoke(QUESTION)
     print("ChatOpenRouter:", openrouter_response.text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Local models with Ollama: setup
+
+    Ollama runs open models on your machine. No API key, no internet needed after the download.
+
+    ### 1. Check how Ollama is installed
+
+    ```bash
+    which ollama                  # /usr/local/bin/ollama = desktop app, /opt/homebrew/bin/ollama = brew
+    brew list | grep -i ollama    # empty = not installed with brew
+    ```
+
+    ### 2. Uninstall
+
+    **Installed with brew:**
+
+    ```bash
+    brew services stop ollama     # skip if it was not started as a service
+    brew uninstall ollama         # for the desktop app cask: brew uninstall --cask ollama
+
+    # To start ollama now and restart at login:
+    brew services start ollama
+    # Or, if you don't want/need a background service you can just run:
+    OLLAMA_FLASH_ATTENTION="1" OLLAMA_KV_CACHE_TYPE="q8_0" /opt/homebrew/opt/ollama/bin/ollama serve
+
+    ```
+
+    **Installed as the desktop app (Ollama.app):**
+
+    ```bash
+    osascript -e 'quit app "Ollama"'
+    rm -rf /Applications/Ollama.app
+    ```
+
+    **Optional cleanup:** downloaded models live in `~/.ollama` (can be many GB).
+
+    ```bash
+    du -sh ~/.ollama              # check the size first
+    rm -rf ~/.ollama              # removes ALL downloaded models
+    ```
+
+    ### 3. Install with brew
+
+    ```bash
+    brew install ollama           # CLI + server
+    brew services start ollama    # run the server in the background (or: ollama serve)
+    ollama --version
+    ```
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Local models with Ollama: find, download, chat
+
+    ### 4. Find a model
+
+    There is no search command in the CLI. Browse **https://ollama.com/search** and pick:
+
+    - a **small** model (roughly 1B-8B parameters, a few GB) so it runs on a laptop,
+    - the **tools** tag if you want tool calling later in this talk.
+
+    A model name looks like `name:tag`, e.g. `<model>:<size>`. The tag is usually the parameter count.
+
+    ### 5. Download it
+
+    ```bash
+    ollama pull <model>:<tag>
+    ollama list                   # installed models and their size
+    ollama show <model>:<tag>     # parameters, context length, capabilities
+    ```
+
+    ### 6. Chat in the terminal
+
+    ```bash
+    ollama run <model>:<tag>
+    ```
+
+    Type a question and press Enter. Useful commands inside the chat: `/?` (help), `/bye` (exit).
+
+    ### 7. Prove that it works offline
+
+    Turn Wi-Fi off, then run `ollama run <model>:<tag>` again. It still answers: the model runs entirely on your machine.
+
+    ### Handy commands
+
+    | Command | What it does |
+    |---|---|
+    | `ollama ps` | Models currently loaded in memory |
+    | `ollama stop <model>:<tag>` | Unload a model |
+    | `ollama rm <model>:<tag>` | Delete a model from disk |
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Local model in code: `ChatOllama`
+
+    Same interface as the cloud models. Differences: no API key, and the server must be running (`ollama serve` / `brew services start ollama`).
+
+    Package: `langchain-ollama`. Model name = exactly what `ollama list` shows.
+    """)
+    return
+
+
+@app.cell
+def _(QUESTION, init_chat_model):
+    OLLAMA_MODEL = "qwen3.5:latest"
+
+    # Option 1: init_chat_model with the "ollama:" prefix
+    ollama_model_1 = init_chat_model(f"ollama:{OLLAMA_MODEL}", reasoning=False)
+
+    ollama_response_1 = ollama_model_1.invoke(QUESTION)
+    print(type(ollama_model_1).__name__, "->", ollama_response_1.text)
+    return (OLLAMA_MODEL,)
+
+
+@app.cell
+def _(OLLAMA_MODEL, QUESTION):
+    from langchain_ollama import ChatOllama
+
+    # Option 2: the dedicated class (provider-specific parameters, e.g. num_ctx, keep_alive)
+    ollama_model_2 = ChatOllama(
+        model=OLLAMA_MODEL,
+        reasoning=False,  # qwen3.5 is a "thinking" model: skip the hidden reasoning to answer faster
+        num_ctx=4096,
+        temperature=0,
+    )
+
+    ollama_response_2 = ollama_model_2.invoke(QUESTION)
+    print("ChatOllama ->", ollama_response_2.text)
     return
 
 
