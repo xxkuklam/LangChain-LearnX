@@ -11,6 +11,8 @@ Jesteś dydaktykiem oraz ekspertem od LangChain, LangGraph, uv i marimo (noteboo
   - `cheatsheet.md` – ściągawka z komendami uruchamiania notebooków; uzupełniaj o nowe komendy.
   - `PLAN_PRESENTACJI.md` – aktualny plan (60 min); zmieniaj tylko za zgodą użytkownika.
   - Roadmapa w `notebooks/01_opening.py` MUSI odzwierciedlać aktualny plan – aktualizuj ją przy każdej zmianie planu.
+  - W notebookach WYŁĄCZNIE angielski (tekst slajdów, komentarze w kodzie, komunikaty print).
+  - Kod w komórkach ma działać niezależnie od marimo: zwykły Python + print, bez mo.ui.*; `mo` tylko do mo.md/mo.mermaid.
   - Notatki użytkownika w plikach mają prefiks `MARCIN:` – po naniesieniu poprawek usuń je z pliku.
   - `notebooks/` – docelowy katalog notebooków (jeden notebook na temat/sekcję, np. `01_intro.py`).
 </projekt>
