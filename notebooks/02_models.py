@@ -333,5 +333,45 @@ def _(OLLAMA_MODEL, QUESTION):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Cloud vs. local: trade-offs
+
+    | | **Cloud** (OpenAI, Anthropic, OpenRouter) | **Local** (Ollama) |
+    |---|---|---|
+    | **Quality** | Best available models | Smaller open models, usually weaker |
+    | **Speed** | Fast, independent of your hardware | Depends on your CPU/GPU and RAM |
+    | **Cost** | Pay per token | Free to run, you pay with hardware |
+    | **Privacy** | Data leaves your machine | Data stays on your machine |
+    | **Offline** | No | Yes |
+    | **Setup** | API key | Install, download model (GBs), run server |
+    | **Tool calling / structured output** | Reliable | Varies by model, test it |
+    | **Scaling** | Handled by the provider | Your problem |
+
+    **Rule of thumb:**
+
+    - **Cloud** for quality and production workloads.
+    - **Local** for sensitive data, offline use, experiments and cheap development.
+    - **OpenRouter** when you want many providers behind one key.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Summary
+
+    - **`init_chat_model("provider:model")`** gives one interface for every provider: switching is a string change.
+    - **Provider classes** (`ChatOpenAI`, `ChatAnthropic`, `ChatOpenRouter`, `ChatOllama`) are the same kind of object, use them for provider-specific parameters.
+    - **Model names change often**: keep them in one constant or list them from the provider API.
+    - **OpenRouter** = many cloud providers behind one API key.
+    - **Ollama** = local, private, offline models with the same code.
+    - **Everything else stays the same**: `invoke`, `stream`, tools and agents do not care which model is behind them.
+    """)
+    return
+
+
 if __name__ == "__main__":
     app.run()
