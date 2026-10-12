@@ -1,0 +1,29 @@
+# Cheatsheet
+
+## Setup
+```bash
+uv sync
+cp .env.example .env   # uzupełnij klucze
+```
+
+## Notebooki
+```bash
+# edycja
+uv run marimo edit notebooks/01_opening.py
+
+# tryb aplikacji (tylko widok)
+uv run marimo run notebooks/01_opening.py
+
+# eksport do HTML (statyczny, z speaker view)
+uv run marimo export html notebooks/01_opening.py -o out/01_opening.html
+
+# lint
+uv run marimo check notebooks/01_opening.py
+```
+Layout slides: w edytorze Preview → layout „slides" (zapisuje się w `notebooks/layouts/`, wersjonuj).
+
+## Notebook 02 (modele)
+```bash
+uv run marimo edit notebooks/02_models.py
+```
+Wymaga kluczy `OPENAI_API_KEY` i `ANTHROPIC_API_KEY` w `.env`.
