@@ -312,14 +312,14 @@ def _(get_bank_payments, get_order_status, issue_refund):
 def _():
     from langchain.messages import HumanMessage, SystemMessage
 
-    messages = [
-        SystemMessage(
-            "You are a customer support assistant. Check the facts with the tools before acting. "
-            "An invoice was paid twice only if the bank shows two payments and each equals the invoice total. "
-            "In that case refund one payment. Otherwise do not refund."
-        ),
-        HumanMessage("Anne Hansen reports that her invoice #4821 for 1200 NOK was charged twice. Please sort it out."),
-    ]
+    SYSTEM_PROMPT = (
+        "You are a customer support assistant. Check the facts with the tools before acting. "
+        "An invoice was paid twice only if the bank shows two payments and each equals the invoice total. "
+        "In that case refund one payment. Otherwise do not refund."
+    )
+    USER_MESSAGE = "Anne Hansen reports that her invoice #4821 for 1200 NOK was charged twice. Please sort it out."
+
+    messages = [SystemMessage(SYSTEM_PROMPT), HumanMessage(USER_MESSAGE)]
     return (messages,)
 
 
@@ -457,7 +457,7 @@ def _(mo):
     - The model may ask for **several tools at once** or for another one after seeing a result.
     - Repeating "ask → run tools → ask again" until there are no more `tool_calls` is exactly what an **agent** does.
 
-    **Next:** ReAct and `create_agent`, the loop done for us.
+    **Next:** ReAct and `create_agent`, the loop done for us (next notebook).
     """)
     return
 

@@ -27,3 +27,11 @@ Layout slides: w edytorze Preview → layout „slides" (zapisuje się w `notebo
 uv run marimo edit notebooks/02_models.py
 ```
 Wymaga kluczy `OPENAI_API_KEY` i `ANTHROPIC_API_KEY` w `.env`.
+
+## Notebooks 03-05 (structured output, tools, ReAct + create_agent)
+```bash
+uv run marimo edit notebooks/03_structured_output.py
+uv run marimo edit notebooks/04_tools.py
+uv run marimo edit notebooks/05_react_agent.py
+```
+Wspólne narzędzia (support): `notebooks/support_tools.py`.

@@ -9,6 +9,7 @@ dependencies = [
     "langchain-ollama>=1.1.0",
     "langchain-openai>=1.7.0",
     "langchain-openrouter>=0.2.9",
+    "langchain-tavily>=0.2.18",
     "marimo>=0.25.1",
     "openai>=3.29.0",
     "python-dotenv>=1.2.4",

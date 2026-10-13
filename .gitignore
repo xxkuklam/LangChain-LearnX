@@ -5,3 +5,4 @@ notes.md
 .env
 .venv
 notebooks/__marimo__
+__pycache__
