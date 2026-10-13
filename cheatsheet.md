@@ -40,3 +40,13 @@ Wspólne narzędzia (support): `notebooks/support_tools.py`.
 ```bash
 uv run marimo edit notebooks/06_middleware.py
 ```
+
+## MCP: serwer Keycloak (`notebooks/keycloak_mcp_server.py`)
+```bash
+# interaktywny MCP Inspector w przeglądarce (wymaga Node.js i mcp[cli])
+uv run mcp dev notebooks/keycloak_mcp_server.py
+
+# sam serwer (stdio, uruchamiany przez klienta MCP)
+uv run python notebooks/keycloak_mcp_server.py
+```
+Wymaga w `.env`: `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET` (klient z service account i rolą `view-clients`).
