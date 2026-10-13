@@ -11,7 +11,7 @@ import os
 
 import httpx
 from dotenv import find_dotenv, load_dotenv
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 load_dotenv(find_dotenv(usecwd=True))
 
