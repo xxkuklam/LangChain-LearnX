@@ -29,9 +29,9 @@ def _(mo):
     An LLM answers with **text**. Our code needs **data**: fields, types, allowed values.
 
     ```text
-    "Anna Kowalska reports that her invoice #4821 for 1200 PLN was charged twice. She is very upset."
+    "Anne Hansen reports that her invoice #4821 for 1200 NOK was charged twice. She is very upset."
                                          ↓
-    SupportTicket(customer="Anna Kowalska", topic="billing", amount=1200.0, urgent=True)
+    SupportTicket(customer="Anne Hansen", topic="billing", amount=1200.0, urgent=True)
     ```
 
     Parsing free text with regex or "please answer in JSON" is fragile. Better: describe the shape once as a **Pydantic class** and let LangChain enforce it.
@@ -61,7 +61,7 @@ def _():
         topic: Literal["billing", "technical", "account", "other"] = Field(
             description="Main topic of the message"
         )
-        amount: float | None = Field(default=None, description="Amount in PLN, if mentioned")
+        amount: float | None = Field(default=None, description="Amount in NOK, if mentioned")
         urgent: bool = Field(description="True if the customer sounds upset or the issue blocks them")
 
     return (SupportTicket,)
@@ -73,7 +73,7 @@ def _(SupportTicket):
 
     MODEL = "openai:gpt-5.4-mini"
     MESSAGE = (
-        "Anna Kowalska reports that her invoice #4821 for 1200 PLN "
+        "Anne Hansen reports that her invoice #4821 for 1200 NOK "
         "was charged twice. She is very upset."
     )
 
