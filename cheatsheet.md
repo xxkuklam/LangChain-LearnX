@@ -35,3 +35,8 @@ uv run marimo edit notebooks/04_tools.py
 uv run marimo edit notebooks/05_react_agent.py
 ```
 Wspólne narzędzia (support): `notebooks/support_tools.py`.
+
+## Notebook 06 (middleware + HITL)
+```bash
+uv run marimo edit notebooks/06_middleware.py
+```
