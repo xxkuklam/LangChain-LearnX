@@ -171,7 +171,7 @@ def _(mo):
     docs = loader.load()        # -> list[Document]
     ```
 
-    - Loaders come from **integration packages** (`langchain-community` and partner packages). There are hundreds.
+    - Loaders come from **integration packages** (partner and standalone packages). There are hundreds.
     - Loading is the **least glamorous and most important** step: bad text extraction (broken tables, scanned PDFs) means bad answers later.
     - You can also create `Document` objects yourself from any data (a database row, an API response).
     """)
@@ -335,7 +335,348 @@ def _(mo):
     | 5 | **Retriever** | `vector_store.as_retriever()` | How does the app ask for relevant pieces? |
     | 6 | **LLM** | `init_chat_model` | Who writes the answer from the pieces? |
 
-    **Next:** the whole pipeline in code, with a small set of real documents.
+    **Next:** the whole pipeline in code, step by step, with the product sheets of a fictional company.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Demo: RAG pipeline step by step
+
+    **Our data:** product sheets of the fictional company **ACME Corp**
+    (invisible cap, anti-gravity boots, pocket hole, tunnel paint, instant boulder), one Markdown file per product.
+
+    **Goal:** an assistant that answers questions about these products, **using only these sheets**.
+
+    We build it in small, linear steps. Each step uses the result of the previous one.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 1: load the documents
+
+    A loader reads a source and returns `Document` objects. For plain files the whole job is two lines: **read the text, wrap it in a `Document`**.
+
+    **Why Markdown and not PDF?** These sheets started as PDFs. A PDF is a poor source for RAG: the text has no structure
+    and tables and columns get mangled. The usual approach is to **convert the PDF to Markdown first**, e.g. with
+    [**Docling**](https://github.com/docling-project/docling) (`langchain-docling` has a ready-made `DoclingLoader`).
+    Markdown keeps headings and lists, which makes better chunks. We start from already converted files.
+
+    ⚠️ `PyPDFLoader` and the other loaders from `langchain-community` may be **deprecated soon** (the package is being sunset),
+    so we do not use them. New loaders live in standalone packages, see the integrations page.
+    """)
+    return
+
+
+@app.cell
+def _():
+    from pathlib import Path
+
+    from langchain_core.documents import Document
+
+    DATA_DIR = Path(__file__).parent / "static" / "acme-corp-dataset" / "products"
+    return DATA_DIR, Document
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### One file first
+    """)
+    return
+
+
+@app.cell
+def _(DATA_DIR, Document):
+    text_cap = (DATA_DIR / "invisible-cap.md").read_text()
+
+    doc_cap = Document(page_content=text_cap, metadata={"source": "invisible-cap.md"})
+
+    print("-------------------------------------------")
+    print("page_content (first 300 characters):")
+    print(doc_cap.page_content[:300])
+    print("-------------------------------------------")
+
+    print("metadata:", doc_cap.metadata)
+    print("characters:", len(doc_cap.page_content))
+    return (doc_cap,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The `metadata` is ours: we decide what to store. The `source` will let us show **where an answer came from**.
+
+    #### Four files from disk
+
+    The same two lines, repeated for every product sheet.
+    """)
+    return
+
+
+@app.cell
+def _(DATA_DIR, Document, doc_cap):
+    text_boots = (DATA_DIR / "anti-gravity-boots.md").read_text()
+    doc_boots = Document(page_content=text_boots, metadata={"source": "anti-gravity-boots.md"})
+
+    text_hole = (DATA_DIR / "pocket-hole.md").read_text()
+    doc_hole = Document(page_content=text_hole, metadata={"source": "pocket-hole.md"})
+
+    text_paint = (DATA_DIR / "tunnel-paint.md").read_text()
+    doc_paint = Document(page_content=text_paint, metadata={"source": "tunnel-paint.md"})
+
+    documents_disk = [doc_cap, doc_boots, doc_hole, doc_paint]
+
+    print("Documents from disk:", len(documents_disk))
+    for _document in documents_disk:
+        print(f"- {_document.metadata['source']:<24} {len(_document.page_content)} characters")
+    return (documents_disk,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### The fifth file: from Google Docs
+
+    A loader does not care **where** the text comes from. The last sheet lives in a Google Doc shared with "anyone with the link".
+    Google can export a Doc as Markdown, so we only need an HTTP request.
+    """)
+    return
+
+
+@app.cell
+def _(Document, documents_disk):
+    import httpx
+
+    GOOGLE_DOC_ID = "1-2Q8V0t3HiN0okKPEc6kXOx3-O7KD_kuk9OgWPutY5M"
+    EXPORT_URL = f"https://docs.google.com/document/d/{GOOGLE_DOC_ID}/export?format=md"
+
+    response_boulder = httpx.get(EXPORT_URL, follow_redirects=True)
+    response_boulder.raise_for_status()
+
+    doc_boulder = Document(
+        page_content=response_boulder.text,
+        metadata={"source": "Google Docs: desert-boulder", "url": EXPORT_URL},
+    )
+
+    # If Google Docs is unavailable, comment out the lines above and uncomment these (same sheet from disk):
+    # text_boulder = (DATA_DIR / "desert-boulder.md").read_text()
+    # doc_boulder = Document(page_content=text_boulder, metadata={"source": "desert-boulder.md"})
+
+    documents = documents_disk + [doc_boulder]
+
+    print("Documents in total:", len(documents))
+    for _document in documents:
+        print(f"- {_document.metadata['source']:<32} {len(_document.page_content)} characters")
+    return (documents,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    We now have **5 `Document` objects** in the list `documents`: four read from disk, one downloaded from Google Docs.
+
+    **Next step:** split them into chunks.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 2: split the documents into chunks
+
+    Our sheets are short (about 1100-1400 characters), but a real manual has hundreds of pages. The splitter does not care: same code.
+
+    Two parameters decide how the text is cut.
+
+    #### `chunk_size`: how big is one chunk
+
+    The **maximum length** of a chunk. By default it is counted in **characters** (not words, not tokens).
+    A chunk can be shorter, never longer (unless a single word is longer than the limit).
+
+    #### `chunk_overlap`: how much neighbouring chunks share
+
+    The **last part of chunk N is repeated at the start of chunk N+1**.
+
+    ```text
+    chunk_size = 60, chunk_overlap = 20
+
+    chunk 1:  "Refunds are possible within 30 days of delivery. The product"
+    chunk 2:  "The product must be unused and in the original packaging."     <- starts with the end of chunk 1
+    chunk 3:  "original packaging. Shipping costs are not refunded."         <- starts with the end of chunk 2
+    ```
+
+    **Why overlap?** A sentence or an idea cut exactly on the border would be split between two chunks and **neither would contain it whole**.
+    The overlap gives both chunks the context around the cut.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### How to choose `chunk_size` and `chunk_overlap`
+
+    There is no universal value. These rules give a good **starting point**, then you **measure**.
+
+    | Rule | Why |
+    |---|---|
+    | **One chunk = one idea** (a paragraph or a short section) | The vector represents the *meaning* of the chunk. A chunk mixing five topics matches none of them well |
+    | **Start with 500-1000 characters** | Typical for prose, FAQs, policies. Code and tables may need more |
+    | **Overlap = 10-20% of `chunk_size`** | Enough to keep a cut sentence, not so much that every chunk repeats the previous one |
+    | **Stay far below the embedding model input limit** | Longer text is truncated or rejected |
+    | **`k` x `chunk_size` must fit the prompt** | We send `k` chunks to the LLM: 5 chunks of 1000 characters is ~5000 characters of context |
+    | **Match the question type** | Precise facts ("what is the price?") like **small** chunks. Summaries and reasoning ("explain the warranty") like **bigger** ones |
+    | **Respect the structure** | Markdown with headings can be split **by headings** (`MarkdownHeaderTextSplitter`) so a section is never cut in half |
+
+    **Symptoms**
+
+    | Problem | Probably |
+    |---|---|
+    | Answers are vague, miss details | Chunks too big (noise, diluted meaning) |
+    | Answers lack context, "he", "it" without the subject | Chunks too small |
+    | The same sentence appears in many results | Overlap too large |
+    | A fact is cut in half at the border | Overlap too small |
+
+    **The real rule:** prepare 10-20 realistic questions, try 2-3 settings, look at **which chunks come back**. Tuning is empirical.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Split with `chunk_size=500` and `chunk_overlap=100`
+
+    Our sheets have 1100-1400 characters, so we use a small `chunk_size` to get a few chunks per sheet and see the effect.
+
+    `add_start_index=True` stores the position of the chunk in the original text.
+    """)
+    return
+
+
+@app.cell
+def _(documents):
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=100,
+        add_start_index=True,
+    )
+
+    chunks = splitter.split_documents(documents)
+
+    print("Documents before splitting:", len(documents))
+    print("Chunks after splitting:", len(chunks))
+    return RecursiveCharacterTextSplitter, chunks
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Look at the chunks of one sheet
+    """)
+    return
+
+
+@app.cell
+def _(chunks):
+    chunks_cap = [c for c in chunks if c.metadata["source"] == "invisible-cap.md"]
+
+    for i, chunk in enumerate(chunks_cap):
+        print(f"--- chunk {i} | {len(chunk.page_content)} characters | start_index={chunk.metadata['start_index']} | source={chunk.metadata['source']}")
+        print(chunk.page_content)
+        print()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - Every chunk is a `Document` with the **metadata copied** from the original, plus `start_index`.
+    - `RecursiveCharacterTextSplitter` cuts at paragraph and line breaks first, so chunks start and end at a natural place.
+    - Here each section of the sheet fitted in one chunk, so **no overlap was needed** (chunk 1 does not repeat the end of chunk 0).
+      The overlap appears only when the splitter has to cut **inside** a long passage.
+
+    #### Overlap in action
+
+    One long paragraph without breaks, cut with `chunk_overlap=0` and with `chunk_overlap=20`:
+    """)
+    return
+
+
+@app.cell
+def _(RecursiveCharacterTextSplitter):
+    text_policy = (
+        "Refunds are possible within 30 days of delivery. "
+        "The product must be unused and in the original packaging. "
+        "Shipping costs are not refunded."
+    )
+
+    splitter_no_overlap = RecursiveCharacterTextSplitter(chunk_size=60, chunk_overlap=0)
+    splitter_overlap = RecursiveCharacterTextSplitter(chunk_size=60, chunk_overlap=20)
+
+    print("chunk_overlap=0:")
+    for _text in splitter_no_overlap.split_text(text_policy):
+        print("  ", repr(_text))
+
+    print()
+    print("chunk_overlap=20:")
+    for _text in splitter_overlap.split_text(text_policy):
+        print("  ", repr(_text))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    With overlap, "The product" and "original packaging." appear in **two** chunks.
+    Without it, the sentence "The product must be unused..." is torn in half: a question about it could miss both chunks.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Experiment: the same documents, different `chunk_size`
+
+    Three splitters, the same code, only the numbers change (overlap is always 20% of the size).
+    """)
+    return
+
+
+@app.cell
+def _(RecursiveCharacterTextSplitter, documents):
+    splitter_small = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=40)
+    splitter_medium = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+    splitter_large = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
+    chunks_small = splitter_small.split_documents(documents)
+    chunks_medium = splitter_medium.split_documents(documents)
+    chunks_large = splitter_large.split_documents(documents)
+
+    print(f"chunk_size=200  -> {len(chunks_small)} chunks, average {sum(len(c.page_content) for c in chunks_small) // len(chunks_small)} characters")
+    print(f"chunk_size=500  -> {len(chunks_medium)} chunks, average {sum(len(c.page_content) for c in chunks_medium) // len(chunks_medium)} characters")
+    print(f"chunk_size=1000 -> {len(chunks_large)} chunks, average {sum(len(c.page_content) for c in chunks_large) // len(chunks_large)} characters")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - **Small chunks**: many, precise, but each one has little context.
+    - **Large chunks**: few, rich in context, but each one mixes several topics.
+    - We continue with the **500 / 100** chunks.
+
+    **Next step:** turn every chunk into a vector (embedding).
     """)
     return
 

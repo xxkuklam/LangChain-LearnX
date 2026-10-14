@@ -14,4 +14,6 @@ dependencies = [
     "marimo>=0.25.1",
     "openai>=3.29.0",
     "python-dotenv>=1.2.4",
+    "langchain-community>=0.4.2",
+    "langchain-text-splitters>=1.1.3",
 ]
