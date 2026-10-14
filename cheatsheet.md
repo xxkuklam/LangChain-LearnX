@@ -28,17 +28,18 @@ uv run marimo edit notebooks/02_models.py
 ```
 Wymaga kluczy `OPENAI_API_KEY` i `ANTHROPIC_API_KEY` w `.env`.
 
-## Notebooks 03-05 (structured output, tools, ReAct + create_agent)
+## Notebooks 03-06 (structured output, chaining LCEL, tools, ReAct + create_agent)
 ```bash
 uv run marimo edit notebooks/03_structured_output.py
-uv run marimo edit notebooks/04_tools.py
-uv run marimo edit notebooks/05_react_agent.py
+uv run marimo edit notebooks/04_chaining.py
+uv run marimo edit notebooks/05_tools.py
+uv run marimo edit notebooks/06_react_agent.py
 ```
 Wspólne narzędzia (support): `notebooks/support_tools.py`.
 
-## Notebook 06 (middleware + HITL)
+## Notebook 07 (middleware + HITL)
 ```bash
-uv run marimo edit notebooks/06_middleware.py
+uv run marimo edit notebooks/07_middleware.py
 ```
 
 ## MCP: serwer Keycloak (`notebooks/keycloak_mcp_server.py`)
@@ -51,22 +52,22 @@ uv run python notebooks/keycloak_mcp_server.py
 ```
 Wymaga w `.env`: `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET` (klient z service account i rolą `view-clients`).
 
-## Notebook 07 (MCP)
+## Notebook 08 (MCP)
 ```bash
-uv run marimo edit notebooks/07_mcp.py
+uv run marimo edit notebooks/08_mcp.py
 ```
 
-## Notebook 08 (memory: checkpointer + store)
+## Notebook 09 (memory: checkpointer + store)
 ```bash
-uv run marimo edit notebooks/08_memory.py
+uv run marimo edit notebooks/09_memory.py
 ```
 
-## Notebook 09 (RAG)
+## Notebook 10 (RAG)
 ```bash
-uv run marimo edit notebooks/09_rag.py
+uv run marimo edit notebooks/10_rag.py
 ```
 
-## Notebook 10 (LangGraph: teoria)
+## Notebook 11 (LangGraph: teoria)
 ```bash
-uv run marimo edit notebooks/10_langgraph.py
+uv run marimo edit notebooks/11_langgraph.py
 ```

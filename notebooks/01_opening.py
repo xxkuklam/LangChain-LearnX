@@ -166,7 +166,7 @@ def _(mo):
     | # | Topic | You will see |
     |---|---|---|
     | 2 | Models | Switch OpenAI → Claude → local Ollama |
-    | 3 | Structured output | LLM answer → Pydantic object |
+    | 3 | Structured output & chaining | LLM answer → Pydantic object, `prompt \| model \| parser` |
     | 4 | Tools & agents | Tool calling, ReAct, web search, SQL |
     | 5 | Middleware & HITL | Approve a tool call before it runs |
     | 6 | MCP | Inspect Keycloak clients from the console |

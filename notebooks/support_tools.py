@@ -1,6 +1,6 @@
 """Customer support tools shared by the notebooks.
 
-Same tools as built step by step in 04_tools.py, collected here so that
+Same tools as built step by step in 05_tools.py, collected here so that
 the following notebooks (agents, middleware, LangGraph) can simply import them.
 """
 
