@@ -55,3 +55,13 @@ Wymaga w `.env`: `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLO
 ```bash
 uv run marimo edit notebooks/07_mcp.py
 ```
+
+## Notebook 08 (memory: checkpointer + store)
+```bash
+uv run marimo edit notebooks/08_memory.py
+```
+
+## Notebook 09 (RAG)
+```bash
+uv run marimo edit notebooks/09_rag.py
+```
