@@ -6,3 +6,4 @@ notes.md
 .venv
 notebooks/__marimo__
 __pycache__
+notebooks/vector_store.json

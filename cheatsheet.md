@@ -65,3 +65,8 @@ uv run marimo edit notebooks/08_memory.py
 ```bash
 uv run marimo edit notebooks/09_rag.py
 ```
+
+## Notebook 10 (LangGraph: teoria)
+```bash
+uv run marimo edit notebooks/10_langgraph.py
+```

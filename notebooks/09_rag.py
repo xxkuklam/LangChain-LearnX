@@ -342,16 +342,25 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""
+    mo.vstack([
+        mo.md(r"""
     ## Demo: RAG pipeline step by step
 
     **Our data:** product sheets of the fictional company **ACME Corp**
     (invisible cap, anti-gravity boots, pocket hole, tunnel paint, instant boulder), one Markdown file per product.
-
+    """),
+        mo.image(
+            src=mo.notebook_dir() / "static" / "acme_rr_coyote.jpeg",
+            width=400,
+            rounded=True,
+            style={"display": "block", "margin": "0 auto"},
+        ),
+        mo.md(r"""
     **Goal:** an assistant that answers questions about these products, **using only these sheets**.
 
     We build it in small, linear steps. Each step uses the result of the previous one.
-    """)
+    """),
+    ])
     return
 
 
@@ -380,7 +389,7 @@ def _():
     from langchain_core.documents import Document
 
     DATA_DIR = Path(__file__).parent / "static" / "acme-corp-dataset" / "products"
-    return DATA_DIR, Document
+    return DATA_DIR, Document, Path
 
 
 @app.cell(hide_code=True)
@@ -505,12 +514,14 @@ def _(mo):
     The **last part of chunk N is repeated at the start of chunk N+1**.
 
     ```text
-    chunk_size = 60, chunk_overlap = 20
+    chunk_size = 150, chunk_overlap = 30      (the overview of the InvisiCap sheet)
 
-    chunk 1:  "Refunds are possible within 30 days of delivery. The product"
-    chunk 2:  "The product must be unused and in the original packaging."     <- starts with the end of chunk 1
-    chunk 3:  "original packaging. Shipping costs are not refunded."         <- starts with the end of chunk 2
+    chunk 1:  "The InvisiCap 3000 is the flagship achievement of ACME Corp's Quantum Physics Division. Visually styled as a classic bowler hat, its lining conceals"
+    chunk 2:  "hat, its lining conceals integrated photon-bending micro-emitters. It allows the user to completely disappear from both visible light and infrared"
+    chunk 3:  "visible light and infrared spectrums."
     ```
+
+    Chunk 2 **starts with the end of chunk 1**, chunk 3 with the end of chunk 2.
 
     **Why overlap?** A sentence or an idea cut exactly on the border would be split between two chunks and **neither would contain it whole**.
     The overlap gives both chunks the context around the cut.
@@ -604,32 +615,33 @@ def _(mo):
     - `RecursiveCharacterTextSplitter` cuts at paragraph and line breaks first, so chunks start and end at a natural place.
     - Here each section of the sheet fitted in one chunk, so **no overlap was needed** (chunk 1 does not repeat the end of chunk 0).
       The overlap appears only when the splitter has to cut **inside** a long passage.
+    - Overlap is counted in the pieces produced by the separators (paragraphs, lines, words), so with Markdown sections it rarely shows up.
 
     #### Overlap in action
 
-    One long paragraph without breaks, cut with `chunk_overlap=0` and with `chunk_overlap=20`:
+    One long paragraph (the overview of the InvisiCap sheet) cut with `chunk_overlap=0` and with `chunk_overlap=30`:
     """)
     return
 
 
 @app.cell
 def _(RecursiveCharacterTextSplitter):
-    text_policy = (
-        "Refunds are possible within 30 days of delivery. "
-        "The product must be unused and in the original packaging. "
-        "Shipping costs are not refunded."
+    text_overview = (
+        "The InvisiCap 3000 is the flagship achievement of ACME Corp\u2019s Quantum Physics Division. "
+        "Visually styled as a classic bowler hat, its lining conceals integrated photon-bending micro-emitters. "
+        "It allows the user to completely disappear from both visible light and infrared spectrums."
     )
 
-    splitter_no_overlap = RecursiveCharacterTextSplitter(chunk_size=60, chunk_overlap=0)
-    splitter_overlap = RecursiveCharacterTextSplitter(chunk_size=60, chunk_overlap=20)
+    splitter_no_overlap = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=0)
+    splitter_overlap = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=30)
 
     print("chunk_overlap=0:")
-    for _text in splitter_no_overlap.split_text(text_policy):
+    for _text in splitter_no_overlap.split_text(text_overview):
         print("  ", repr(_text))
 
     print()
-    print("chunk_overlap=20:")
-    for _text in splitter_overlap.split_text(text_policy):
+    print("chunk_overlap=30:")
+    for _text in splitter_overlap.split_text(text_overview):
         print("  ", repr(_text))
     return
 
@@ -637,8 +649,10 @@ def _(RecursiveCharacterTextSplitter):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    With overlap, "The product" and "original packaging." appear in **two** chunks.
-    Without it, the sentence "The product must be unused..." is torn in half: a question about it could miss both chunks.
+    Without overlap the sentence about the lining is **torn in half**: "...its lining conceals" ends one chunk, "integrated photon-bending micro-emitters" starts the next.
+    A question about what the lining conceals could miss both chunks.
+
+    With overlap, "hat, its lining conceals" and "visible light and infrared" appear in **two** chunks, so the sentence stays whole in at least one of them.
     """)
     return
 
@@ -677,6 +691,814 @@ def _(mo):
     - We continue with the **500 / 100** chunks.
 
     **Next step:** turn every chunk into a vector (embedding).
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 3: embed the chunks
+
+    An **embedding model** reads a text and returns a **vector**: a long list of numbers that encodes its meaning.
+
+    - `embed_documents([...])`: many texts at once, returns one vector per text. We use it for the **chunks**.
+    - `embed_query("...")`: one text, returns one vector. We use it for the **question**.
+    - Both calls must use **the same model**, otherwise the vectors cannot be compared.
+    - It is a **separate model** from the chat model, and it is cheap (we pay per token, but chunks are small).
+
+    Cloud models (OpenAI) and local ones (Ollama, Hugging Face) are used with the same two methods.
+    """)
+    return
+
+
+@app.cell
+def _():
+    from dotenv import find_dotenv, load_dotenv
+
+    load_dotenv(find_dotenv(usecwd=True))  # OPENAI_API_KEY from .env
+    return
+
+
+@app.cell
+def _():
+    from langchain_openai import OpenAIEmbeddings
+
+    EMBEDDING_MODEL = "text-embedding-3-small"
+
+    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    return OpenAIEmbeddings, embeddings
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### What does a vector look like?
+    """)
+    return
+
+
+@app.cell
+def _(embeddings):
+    vector_example = embeddings.embed_query("Can I use the invisible cap in the rain?")
+
+    print("type:", type(vector_example).__name__, "of", type(vector_example[0]).__name__)
+    print("length (dimensions):", len(vector_example))
+    print("first 50 numbers:", [round(x, 4) for x in vector_example[:50]])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    A list of **1536 numbers**. Single numbers mean nothing to us: only the **distance between vectors** is meaningful.
+
+    #### Embed all chunks
+
+    One call, one vector for every chunk.
+    """)
+    return
+
+
+@app.cell
+def _(chunks, embeddings):
+    chunk_texts = [chunk.page_content for chunk in chunks]
+
+    chunk_vectors = embeddings.embed_documents(chunk_texts)
+
+    print("chunks:", len(chunk_texts))
+    print("vectors:", len(chunk_vectors), "x", len(chunk_vectors[0]), "numbers")
+    return (chunk_vectors,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Search by meaning: by hand
+
+    Next step, a **vector store** will do this for us. Now we do it manually to see there is no magic:
+
+    1. Embed the **question** (with the same model).
+    2. Compare its vector with the vector of **every chunk**. OpenAI vectors have length 1, so the
+       **dot product is the cosine similarity**: 1.0 = the same meaning, close to 0 = unrelated.
+    3. Show the chunks with the highest scores.
+    """)
+    return
+
+
+@app.cell
+def _(chunk_vectors, chunks, embeddings):
+    question_1 = "Can I use the invisible cap in the rain?"
+
+    question_vector_1 = embeddings.embed_query(question_1)
+
+    scores_1 = [sum(q * c for q, c in zip(question_vector_1, vector)) for vector in chunk_vectors]
+
+    ranking_1 = sorted(zip(scores_1, chunks), key=lambda pair: pair[0], reverse=True)
+
+    print("QUESTION:", question_1)
+    print()
+    for _score, _chunk in ranking_1[:3]:
+        print(f"{_score:.3f} | {_chunk.metadata['source']} | {_chunk.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    All three best chunks come from the **invisible cap** sheet, not from the other four products: the search understood what the question is about.
+
+    Look closer: the chunk that actually answers ("DOES NOT work during heavy rain", in **Safety Instructions**) is only **third**, with 0.415.
+    The first one is the start of the sheet (title and overview). That is normal: retrieval is approximate, and this is why we take the **top k** chunks (not just one) and let the LLM read them all.
+
+    #### Another question: a different product
+    """)
+    return
+
+
+@app.cell
+def _(chunk_vectors, chunks, embeddings):
+    question_2 = "How high can I jump with the boots?"
+
+    question_vector_2 = embeddings.embed_query(question_2)
+
+    scores_2 = [sum(q * c for q, c in zip(question_vector_2, vector)) for vector in chunk_vectors]
+
+    ranking_2 = sorted(zip(scores_2, chunks), key=lambda pair: pair[0], reverse=True)
+
+    print("QUESTION:", question_2)
+    print()
+    for _score, _chunk in ranking_2[:3]:
+        print(f"{_score:.3f} | {_chunk.metadata['source']} | {_chunk.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Bonus: the question in Polish
+
+    The embedding model is multilingual: a question in another language lands near the chunks of the same product.
+    """)
+    return
+
+
+@app.cell
+def _(chunk_vectors, chunks, embeddings):
+    question_3 = "Czy czapka niewidka działa podczas deszczu?"
+
+    question_vector_3 = embeddings.embed_query(question_3)
+
+    scores_3 = [sum(q * c for q, c in zip(question_vector_3, vector)) for vector in chunk_vectors]
+
+    ranking_3 = sorted(zip(scores_3, chunks), key=lambda pair: pair[0], reverse=True)
+
+    print("QUESTION:", question_3)
+    print()
+    for _score, _chunk in ranking_3[:3]:
+        print(f"{_score:.3f} | {_chunk.metadata['source']} | {_chunk.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    - An embedding is the **meaning of a text as numbers**; similar meaning = vectors close to each other.
+    - Searching = embed the question, find the **nearest chunk vectors**.
+    - Going through all vectors one by one is fine for 16 chunks. For millions we need an index: that is what a **vector store** is for.
+
+    **Next step:** store the chunks and their vectors in a vector store.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 4: store the chunks in a vector store
+
+    Doing the search by hand (embed, compare with every vector, sort) is exactly what a **vector store** does for us.
+
+    - `add_documents(chunks)`: embeds every chunk with the embedding model and stores text, metadata and vector.
+    - `similarity_search(question, k=3)`: embeds the question and returns the `k` nearest chunks as `Document` objects.
+
+    We use `InMemoryVectorStore`: no installation, no server, data lives in memory. Other stores (FAISS, Chroma, pgvector...) have the **same methods**.
+    """)
+    return
+
+
+@app.cell
+def _(chunks, embeddings):
+    from langchain_core.vectorstores import InMemoryVectorStore
+
+    vector_store = InMemoryVectorStore(embeddings)
+
+    chunk_ids = vector_store.add_documents(chunks)
+
+    print("Chunks stored:", len(chunk_ids))
+    print("First id:", chunk_ids[0])
+    return InMemoryVectorStore, vector_store
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    `add_documents` called the embedding model again (it does not know about the vectors we computed by hand). It is cheap here: 16 small chunks.
+
+    #### Search
+
+    The same question as before. Compare with the manual ranking.
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    question_4 = "Can I use the invisible cap in the rain?"
+
+    results_4 = vector_store.similarity_search(question_4, k=3)
+
+    print("QUESTION:", question_4)
+    print()
+    for _result in results_4:
+        print(f"{_result.metadata['source']} | {_result.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The result is a plain `list[Document]`: the same top 3 chunks as in our manual ranking.
+
+    #### Search with scores
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    results_5 = vector_store.similarity_search_with_score("Can I use the invisible cap in the rain?", k=3)
+
+    for _result, _score in results_5:
+        print(f"{_score:.3f} | {_result.metadata['source']} | {_result.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    For this store the score is the **cosine similarity** (higher = closer), the same numbers as our manual dot product.
+    In other stores the score may be a **distance** (lower = closer): always check the documentation.
+
+    #### Search with a metadata filter
+
+    The `metadata` we set while loading now pays off: search **only in one product sheet**.
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    results_6 = vector_store.similarity_search(
+        "What is the price?",
+        k=2,
+        filter=lambda document: document.metadata["source"] == "pocket-hole.md",
+    )
+
+    for _result in results_6:
+        print(f"{_result.metadata['source']} | {_result.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Look inside the vector store
+
+    `InMemoryVectorStore` can save its content to a JSON file. Open the file in your editor to see **how the data looks in the store**.
+    """)
+    return
+
+
+@app.cell
+def _(Path, vector_store):
+    import json
+
+    DUMP_FILE = Path(__file__).parent / "vector_store.json"
+
+    vector_store.dump(str(DUMP_FILE))
+
+    with open(DUMP_FILE) as file:
+        dump = json.load(file)
+
+    print("File:", DUMP_FILE.name, f"({DUMP_FILE.stat().st_size // 1024} KB)")
+    print("Entries:", len(dump))
+    return (dump,)
+
+
+@app.cell
+def _(dump):
+    entry = list(dump.values())[0]
+
+    print("keys:    ", list(entry.keys()))
+    print("id:      ", entry["id"])
+    print("text:    ", entry["text"][:60].replace("\n", " "), "...")
+    print("metadata:", entry["metadata"])
+    print("vector:  ", len(entry["vector"]), "numbers, first 5:", [round(x, 4) for x in entry["vector"][:5]])
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Each entry is one chunk: an **id**, the **text**, the **metadata** and the **vector** (1536 numbers).
+    That is all a vector store keeps. Real databases add an **index** so the search is fast for millions of entries.
+
+    **Next step:** a retriever, and the LLM that writes the answer.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 5: wrap the vector store in a retriever
+
+    A vector store has its own methods (`similarity_search`, `add_documents`...). A **retriever** hides them behind one simple interface:
+    **a question (string) in, a list of `Document` out**.
+
+    ```python
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    ```
+
+    Why bother? A retriever is a **Runnable**: it has `invoke`, `batch`, `ainvoke`... like the models and tools we already know.
+    That is the shape that chains, graphs and agent tools expect.
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 3},
+    )
+
+    print("type:", type(retriever).__name__)
+    return (retriever,)
+
+
+@app.cell
+def _(retriever):
+    docs_1 = retriever.invoke("Can I use the invisible cap in the rain?")
+
+    print("Retrieved:", len(docs_1), "documents")
+    for _doc in docs_1:
+        print(f"- {_doc.metadata['source']} | {_doc.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Same three chunks as `similarity_search`: the retriever only wraps it.
+
+    #### It is a Runnable: `batch`
+
+    Several questions in one call, one list of documents per question.
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    retriever_k1 = vector_store.as_retriever(search_kwargs={"k": 1})
+
+    batch_results = retriever_k1.batch([
+        "What is the price of the boots?",
+        "What are the dangers of the pocket hole?",
+        "How long does the tunnel paint need to dry?",
+    ])
+
+    for _docs in batch_results:
+        print(f"- {_docs[0].metadata['source']} | {_docs[0].page_content[:60]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Search types: `similarity` vs `mmr`
+
+    - **`similarity`**: the `k` closest chunks. They can be near-duplicates of each other.
+    - **`mmr`** (maximal marginal relevance): the closest chunk first, then chunks that are close **and different** from those already chosen. `fetch_k` = how many candidates to consider.
+    - **`similarity_score_threshold`**: only chunks above a minimum score. **Not every store supports it** (`InMemoryVectorStore` does not).
+    """)
+    return
+
+
+@app.cell
+def _(vector_store):
+    retriever_mmr = vector_store.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": 3, "fetch_k": 10},
+    )
+
+    docs_2 = retriever_mmr.invoke("Can I use the invisible cap in the rain?")
+
+    for _doc in docs_2:
+        print(f"- {_doc.metadata['source']} | {_doc.page_content[:70]!r}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    MMR replaced the FAQ chunk (too similar to the first one) with a chunk from **another product**.
+    With a tiny knowledge base this makes the result worse, with thousands of overlapping chunks it avoids repeating the same fact.
+    **We stay with `similarity`.**
+
+    **Next step:** give the retrieved chunks to the LLM and get the answer.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Step 6: give the chunks to the LLM
+
+    The last two steps of the flow, written as plain, linear code:
+
+    1. **Retrieve** the chunks for the question (the retriever).
+    2. **Build the prompt**: instructions + the chunks as *context* + the question.
+    3. **Ask the LLM** and print the answer.
+
+    The most important part is the **instruction**: answer *only* from the context, say "I don't know" otherwise, name the source.
+    """)
+    return
+
+
+@app.cell
+def _():
+    from langchain.chat_models import init_chat_model
+
+    MODEL = "openai:gpt-5.4-mini"
+
+    model = init_chat_model(MODEL)
+
+    SYSTEM_PROMPT = (
+        "You are a helpful assistant of ACME Corp. "
+        "Answer the question using ONLY the context below. "
+        "Keep the answer short and name the product sheet (source) you used. "
+        "If the answer is not in the context, reply only: I don't know based on the product sheets. "
+        "(do not name any source in that case)."
+    )
+    return MODEL, SYSTEM_PROMPT, model
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Without RAG: the model alone
+
+    The same question, no context.
+    """)
+    return
+
+
+@app.cell
+def _(model):
+    question_7 = "Can I use the invisible cap in the rain?"
+
+    answer_7 = model.invoke(question_7)
+
+    print("QUESTION:", question_7)
+    print("ANSWER (no RAG):", answer_7.text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The model knows nothing about our product: it guesses, or says it cannot know.
+
+    #### With RAG: retrieve, build the prompt, ask
+    """)
+    return
+
+
+@app.cell
+def _(SYSTEM_PROMPT, model, retriever):
+    question_8 = "Can I use the invisible cap in the rain?"
+
+    # 1. Retrieve
+    docs_8 = retriever.invoke(question_8)
+
+    # 2. Build the prompt: every chunk with its source, then the question
+    context_8 = "\n\n".join(f"[source: {_doc.metadata['source']}]\n{_doc.page_content}" for _doc in docs_8)
+    user_message_8 = f"Context:\n{context_8}\n\nQuestion: {question_8}"
+
+    # 3. Ask the LLM
+    answer_8 = model.invoke([
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message_8},
+    ])
+
+    print("QUESTION:", question_8)
+    print("ANSWER (RAG):", answer_8.text)
+    return (user_message_8,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The answer comes from the **Safety Instructions** chunk and names the source.
+
+    ⚠️ **When a RAG answer is wrong, first look at the retrieved chunks.** The model can only use what the retriever found.
+    Ask "Can I use the *ACME InvisiCap 3000* in the rain?" and the Safety chunk falls to 5th place: with `k=3` the answer becomes "I don't know".
+    Fixes: a bigger `k`, better chunks, better wording of the question.
+
+    #### What did the LLM actually receive?
+
+    No magic: the retrieved chunks are just **text pasted into the prompt**.
+    """)
+    return
+
+
+@app.cell
+def _(user_message_8):
+    print(user_message_8)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Another product, the same code
+
+    The three steps again, only the question changes.
+    """)
+    return
+
+
+@app.cell
+def _(SYSTEM_PROMPT, model, retriever):
+    question_9 = "How high can I jump with the GraviStop boots and how long do they take to charge?"
+
+    docs_9 = retriever.invoke(question_9)
+
+    context_9 = "\n\n".join(f"[source: {_doc.metadata['source']}]\n{_doc.page_content}" for _doc in docs_9)
+    user_message_9 = f"Context:\n{context_9}\n\nQuestion: {question_9}"
+
+    answer_9 = model.invoke([
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message_9},
+    ])
+
+    print("QUESTION:", question_9)
+    print("ANSWER (RAG):", answer_9.text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### A question that is NOT in the documents
+
+    This is where the instruction "answer ONLY from the context" matters.
+    """)
+    return
+
+
+@app.cell
+def _(SYSTEM_PROMPT, model, retriever):
+    question_10 = "What is the price of the ACME Rocket Skates?"
+
+    docs_10 = retriever.invoke(question_10)
+
+    context_10 = "\n\n".join(f"[source: {_doc.metadata['source']}]\n{_doc.page_content}" for _doc in docs_10)
+    user_message_10 = f"Context:\n{context_10}\n\nQuestion: {question_10}"
+
+    answer_10 = model.invoke([
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message_10},
+    ])
+
+    print("QUESTION:", question_10)
+    print("ANSWER (RAG):", answer_10.text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The retriever **always** returns the k nearest chunks, even when none is relevant. It is the **prompt** that makes the model admit
+    "I don't know" instead of inventing a price. That is the difference between a trustworthy assistant and a confident liar.
+
+    ### RAG pipeline: recap
+
+    | Step | Code |
+    |---|---|
+    | 1. Load | `Document(page_content=..., metadata=...)` |
+    | 2. Split | `RecursiveCharacterTextSplitter(...).split_documents(documents)` |
+    | 3. Embed | `OpenAIEmbeddings(model=...)` |
+    | 4. Store | `InMemoryVectorStore(embeddings).add_documents(chunks)` |
+    | 5. Retrieve | `vector_store.as_retriever(search_kwargs={"k": 3}).invoke(question)` |
+    | 6. Generate | prompt = instructions + chunks + question, then `model.invoke(...)` |
+
+    **Next:** the retriever as a **tool** of an agent, so the agent decides *when* to look something up.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Can a better embedding model help?
+
+    The retriever is only as good as the embeddings. Which models are there?
+
+    | Provider | Models | Notes |
+    |---|---|---|
+    | **OpenAI** | `text-embedding-3-small`, `text-embedding-3-large` | Large = better quality, more dimensions (3072), higher price |
+    | **Voyage AI** | `voyage-4-lite`, `voyage-4`, `voyage-4-large`, domain models (code, law, finance) | The provider **recommended by Anthropic**, needs its own API key |
+    | **Local** | Ollama, Hugging Face (`OllamaEmbeddings`, `HuggingFaceEmbeddings`) | Free, private, quality depends on the model |
+
+    ⚠️ **Anthropic has no embedding model of its own.** With Claude as the chat model you still need an embedding provider (Anthropic's documentation points to Voyage AI).
+    Chat model and embedding model are independent: you can mix them freely.
+
+    #### Test: the question that failed before
+
+    "Can I use the ACME InvisiCap 3000 in the rain?" put the *Safety Instructions* chunk only on the 5th place with `text-embedding-3-small`.
+    Same chunks, same question, a bigger embedding model:
+    """)
+    return
+
+
+@app.cell
+def _(InMemoryVectorStore, OpenAIEmbeddings, chunks, vector_store):
+    embeddings_large = OpenAIEmbeddings(model="text-embedding-3-large")
+
+    vector_store_large = InMemoryVectorStore(embeddings_large)
+    vector_store_large.add_documents(chunks)
+
+    question_11 = "Can I use the ACME InvisiCap 3000 in the rain?"
+
+    print("QUESTION:", question_11)
+    print()
+    print("text-embedding-3-small:")
+    for _doc, _score in vector_store.similarity_search_with_score(question_11, k=5):
+        print(f"  {_score:.3f} | {_doc.metadata['source']} | {_doc.page_content.splitlines()[0][:45]}")
+
+    print()
+    print("text-embedding-3-large:")
+    for _doc, _score in vector_store_large.similarity_search_with_score(question_11, k=5):
+        print(f"  {_score:.3f} | {_doc.metadata['source']} | {_doc.page_content.splitlines()[0][:45]}")
+    return (vector_store_large,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    With the larger model the *Safety Instructions* chunk moves from **5th to 3rd place**, so `k=3` is enough.
+    A better embedding model helps, but it does not remove the need to **check what the retriever returns**.
+
+    We use the `large` store for the agent below.
+
+    ## RAG as a tool of an agent
+
+    So far we always searched, **whatever the user asked**. Even for "hello" we would pay for an embedding and put random chunks into the prompt.
+
+    Better: give the agent the search as a **tool** and let it decide:
+
+    - a greeting or small talk: no search,
+    - a question about a product: search,
+    - a question about two products: **search twice**, once per product.
+
+    This is sometimes called *agentic RAG*. The tool is the same kind of `@tool` as in section 4: the retriever inside is just the implementation.
+    """)
+    return
+
+
+@app.cell
+def _(vector_store_large):
+    from langchain.tools import tool
+
+    retriever_large = vector_store_large.as_retriever(search_kwargs={"k": 3})
+
+
+    @tool
+    def search_product_sheets(query: str) -> str:
+        """Search the ACME Corp product sheets. Use it for any question about ACME products:
+        features, price, specifications, safety, warranty. Query with the product name and the topic."""
+        docs = retriever_large.invoke(query)
+        return "\n\n".join(f"[source: {doc.metadata['source']}]\n{doc.page_content}" for doc in docs)
+
+    return (search_product_sheets,)
+
+
+@app.cell
+def _(MODEL, search_product_sheets):
+    from langchain.agents import create_agent
+
+    agent_rag = create_agent(
+        MODEL,
+        tools=[search_product_sheets],
+        system_prompt=(
+            "You are a helpful assistant of ACME Corp. "
+            "For questions about ACME products, search the product sheets and answer ONLY from the search results. "
+            "If the sheets do not contain the answer, say you do not know. "
+            "Keep answers short and name the source sheet. "
+            "For greetings and small talk, answer directly without searching."
+        ),
+    )
+    return (agent_rag,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### 1. Small talk: the agent should NOT search
+    """)
+    return
+
+
+@app.cell
+def _(agent_rag):
+    result_12 = agent_rag.invoke({"messages": [{"role": "user", "content": "Hi! What can you help me with?"}]})
+
+    _tool_calls = [call for message in result_12["messages"] for call in getattr(message, "tool_calls", [])]
+
+    print("Number of tool calls:", len(_tool_calls))
+    print("AGENT:", result_12["messages"][-1].text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### 2. A product question: the agent searches
+    """)
+    return
+
+
+@app.cell
+def _(agent_rag):
+    result_13 = agent_rag.invoke(
+        {"messages": [{"role": "user", "content": "How long does the battery of the ACME InvisiCap 3000 last?"}]}
+    )
+
+    for _message in result_13["messages"]:
+        for _call in getattr(_message, "tool_calls", []):
+            print("tool call:", _call["name"], _call["args"])
+    print("AGENT:", result_13["messages"][-1].text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    The agent **wrote the search query itself**: it did not just paste the user's text.
+
+    ⚠️ That is also a risk. Ask the rain question here and the agent may write "InvisiCap 3000 rain waterproof weather resistance":
+    the *Safety* chunk does not appear in the top 3, even with the large model, because it never mentions the product name.
+    Typical fixes: put the **product name into every chunk**, a larger `k`, hybrid search (keywords + vectors) or a reranker.
+
+    #### 3. A question about two products
+    """)
+    return
+
+
+@app.cell
+def _(agent_rag):
+    result_14 = agent_rag.invoke(
+        {"messages": [{"role": "user", "content": "Which is more expensive: the invisible cap or the anti-gravity boots?"}]}
+    )
+
+    for _message in result_14["messages"]:
+        for _call in getattr(_message, "tool_calls", []):
+            print("tool call:", _call["name"], _call["args"])
+    print("AGENT:", result_14["messages"][-1].text)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    One question, **two searches** (one per product). A fixed "retrieve then answer" pipeline would search once with the whole sentence.
+
+    ### RAG as a tool: summary
+
+    | | **Fixed RAG pipeline** | **RAG as a tool (agentic RAG)** |
+    |---|---|---|
+    | Search | On **every** question | Only **when the agent decides** |
+    | Query | The user's text | Written by the agent, can be several |
+    | Cost | 1 search + 1 LLM call | Maybe 0 searches, maybe several, 2+ LLM calls |
+    | Predictability | High | Lower, the model chooses |
+    | Use it for | Simple Q&A over one knowledge base | Assistants with many tools and several knowledge bases |
+
+    **Rule of thumb:** a fixed pipeline when every question needs the documents, a tool when RAG is *one of many* abilities of the agent.
     """)
     return
 
