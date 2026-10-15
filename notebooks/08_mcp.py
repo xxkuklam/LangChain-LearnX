@@ -270,6 +270,14 @@ def _(mo):
     - The server is `notebooks/keycloak_mcp_server.py` (built with `fastmcp`).
     - It has **two read-only tools**: `list_realms()` and `list_clients(realm)`.
     - It logs in with a dedicated **service account** that only has the `view-*` roles: it cannot change anything.
+
+    **Who is who in this demo:**
+
+    | Role | In this demo |
+    |---|---|
+    | **Host** | This notebook: the agent (`create_agent` + LLM) |
+    | **Client** | `MCPAdapter` (it uses a `fastmcp` client underneath) |
+    | **Server** | `keycloak_mcp_server.py`, started as a **subprocess** (stdio), because we pass a `Path(...)` |
     """)
     return
 
