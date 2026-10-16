@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 3. Chaining (LCEL)
+    # 4. Chaining (LCEL)
 
     ## `prompt | model | parser`: building blocks joined with a pipe
     """)
@@ -86,7 +86,10 @@ def _(ChatPromptTemplate, StrOutputParser, model):
     ])
 
     # 1. Prompt: fill the placeholders
-    prompt_value = prompt.invoke({"language": "English", "question": "My anti-gravity boots took me to the ceiling. How do I get down?"})
+    prompt_value = prompt.invoke({
+        "language": "English", 
+        "question": "My anti-gravity boots took me to the ceiling. How do I get down?"
+    })
     print("PROMPT:", prompt_value.to_messages())
     print()
 
@@ -265,7 +268,7 @@ def _(mo):
     - No **decision** ("if urgent, go this way, otherwise that way").
     - No **state** that lives between steps, no pause for a human.
 
-    Those are the jobs for **LangGraph** (section 9). Chains remain the best tool for short, linear flows.
+    Those are the jobs for **LangGraph** (section 11). Chains remain the best tool for short, linear flows.
 
     | Need | Tool |
     |---|---|
@@ -288,6 +291,50 @@ def _(mo):
     - The last step can be a text parser or `with_structured_output(...)`.
     - A `dict` or `RunnableParallel` runs branches on the same input; `RunnableLambda` adds plain Python.
     - Linear only. For loops, decisions and state use **LangGraph**.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Output parsers: the last step of the chain
+
+    A parser takes the model's **`AIMessage`** and returns a Python value. Pick the one that matches the shape you need.
+
+    1. **`StrOutputParser`**: takes the text.
+       - In: `AIMessage(content="Hello")`
+       - Out: `"Hello"` (a `str`)
+       - Use: plain answers, summaries, translations. The default last step of most chains.
+
+    2. **`JsonOutputParser`**: takes JSON, also when it is wrapped in a Markdown code block.
+       - In: `AIMessage(content='```json\n{"topic": "billing", "urgent": true}\n```')`
+       - Out: `{"topic": "billing", "urgent": True}` (a `dict`)
+       - Use: quick structured output without a fixed schema. Prefer `with_structured_output` when you know the schema.
+
+    3. **`PydanticOutputParser(pydantic_object=Ticket)`**: takes JSON and validates it against a Pydantic class.
+       - In: `AIMessage(content='{"topic": "billing", "urgent": true}')`
+       - Out: `Ticket(topic='billing', urgent=True)` (a validated object)
+       - Use: the same idea as `with_structured_output`, but for models without tool calling. It also adds format instructions to the prompt (`get_format_instructions()`).
+
+    4. **`PydanticToolsParser(tools=[Ticket])`**: takes **tool calls** and returns Pydantic objects.
+       - In: `AIMessage(content="\", tool_calls=[{"name": "Ticket", "args": {"topic": "billing", "urgent": True}, "id": "1"}])`
+       - Out: `[Ticket(topic='billing', urgent=True)]` (a list)
+       - Use: when the model answers through tool calling (e.g. `bind_tools`) and you want typed objects instead of raw dicts.
+
+    5. **`CommaSeparatedListOutputParser`**: takes a comma-separated line.
+       - In: `AIMessage(content="boots, cap, paint")`
+       - Out: `["boots", "cap", "paint"]` (a `list[str]`)
+       - Use: keywords, tags, short lists, quick brainstorming.
+
+    6. **`MarkdownListOutputParser`**: takes a Markdown bullet list.
+       - In: `AIMessage(content="- boots\n- cap\n- paint")`
+       - Out: `["boots", "cap", "paint"]` (a `list[str]`)
+       - Use: lists the model writes in bullets, e.g. steps, options, action items.
+
+    `XMLOutputParser` also exists, but it needs the extra package `defusedxml`. We skip it here.
+
+    Rule of thumb: **plain text → `StrOutputParser`; data you will use in code → a Pydantic class** (through `with_structured_output`, `PydanticOutputParser` or `PydanticToolsParser`).
     """)
     return
 

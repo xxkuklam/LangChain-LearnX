@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 7. Memory
+    # 9. Memory
 
     ## Checkpointers (short-term) and stores (long-term)
     """)
@@ -126,7 +126,7 @@ def _(mo):
     - **expensive** (we pay for all tokens on every call),
     - **noisy** (old, irrelevant messages confuse the model).
 
-    Options (all are middleware, you know the idea from the previous section):
+    Options (all are middleware, you know the idea from section 7):
 
     | Strategy | How | Trade-off |
     |---|---|---|

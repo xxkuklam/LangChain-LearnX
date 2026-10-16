@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 5. Middleware and human in the loop
+    # 7. Middleware and human in the loop
 
     ## Middleware: hooks around model and tool calls
     """)

@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 8. RAG: Retrieval-Augmented Generation
+    # 10. RAG: Retrieval-Augmented Generation
 
     ## Give the model knowledge it was never trained on
     """)
@@ -1376,7 +1376,7 @@ def _(mo):
     - a question about a product: search,
     - a question about two products: **search twice**, once per product.
 
-    This is sometimes called *agentic RAG*. The tool is the same kind of `@tool` as in section 4: the retriever inside is just the implementation.
+    This is sometimes called *agentic RAG*. The tool is the same kind of `@tool` as in section 5: the retriever inside is just the implementation.
     """)
     return
 

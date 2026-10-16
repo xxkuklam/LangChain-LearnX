@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 9. LangGraph
+    # 11. LangGraph
 
     ## Workflows as graphs: full control over the flow
     """)

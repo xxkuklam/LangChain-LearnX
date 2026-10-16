@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 6. MCP: Model Context Protocol
+    # 8. MCP: Model Context Protocol
 
     ## One standard way to give tools to any AI application
     """)
@@ -27,7 +27,7 @@ def _(mo):
         mo.md(r"""
     ## The problem: every integration is custom
 
-    Our `@tool` functions from section 4 live **inside one Python app**.
+    Our `@tool` functions from section 5 live **inside one Python app**.
     What if the same capability (e.g. "read from Keycloak", "search Jira") is needed by **many** AI apps, written in different languages?
 
     Without a standard: every app needs its own connector for every system, **N × M integrations**.
@@ -135,7 +135,7 @@ def _(mo):
     | **Resources** | Read-only data (files, records) | The **application** | A config file, a DB schema |
     | **Prompts** | Reusable prompt templates | The **user** | "Review this realm's clients" |
 
-    In this talk we focus on **tools**: that is what agents use most, and it is what we already know from section 4.
+    In this talk we focus on **tools**: that is what agents use most, and it is what we already know from section 5.
 
     Good to know: MCP also lets a server ask the user for input (*elicitation*) and ask the host's model to generate text (*sampling*).
     """)
@@ -328,7 +328,7 @@ async def _(MCPAdapter, SERVER):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    These are the same kind of objects as our `@tool` functions from section 4.
+    These are the same kind of objects as our `@tool` functions from section 5.
     The description and the argument schema come **from the server**: the agent code knows nothing about Keycloak.
 
     ### Step 2: an agent with an expert role

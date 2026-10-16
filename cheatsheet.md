@@ -1,12 +1,12 @@
-# Ściągawka
+# Cheatsheet
 
-## Przygotowanie środowiska
+## Environment setup
 ```bash
 uv sync
-cp .env.example .env   # uzupełnij klucze
+cp .env.example .env   # fill in the API keys
 ```
 
-## Notebook `01_opening.py` — wprowadzenie
+## Notebook `01_opening.py` — introduction
 ```bash
 uv run marimo edit notebooks/01_opening.py
 ```
@@ -18,9 +18,9 @@ uv run marimo run notebooks/01_opening.py
 ```bash
 uv run marimo check notebooks/01_opening.py
 ```
-Tryb slajdów: w edytorze wybierz podgląd („Preview”) → układ „slides” (zapisuje się w `notebooks/layouts/`; dodaj te pliki do kontroli wersji).
+Slides mode: in the editor, select Preview → the "slides" layout (saved in `notebooks/layouts/`; add these files to version control).
 
-## Notebook `02_models.py` — modele
+## Notebook `02_models.py` — models
 ```bash
 uv run marimo edit notebooks/02_models.py
 ```
@@ -33,9 +33,9 @@ uv run marimo run notebooks/02_models.py
 uv run marimo check notebooks/02_models.py
 ```
 
-Wymaga kluczy `OPENAI_API_KEY` i `ANTHROPIC_API_KEY` w `.env`.
+Requires `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` in `.env`.
 
-## Notebook `03_structured_output.py` — ustrukturyzowane odpowiedzi
+## Notebook `03_structured_output.py` — structured output
 
 ```bash
 uv run marimo edit notebooks/03_structured_output.py
@@ -49,7 +49,7 @@ uv run marimo run notebooks/03_structured_output.py
 uv run marimo check notebooks/03_structured_output.py
 ```
 
-## Notebook `04_chaining.py` — łączenie wywołań za pomocą LCEL
+## Notebook `04_chaining.py` — chaining with LCEL
 
 ```bash
 uv run marimo edit notebooks/04_chaining.py
@@ -63,7 +63,7 @@ uv run marimo run notebooks/04_chaining.py
 uv run marimo check notebooks/04_chaining.py
 ```
 
-## Notebook `05_tools.py` — narzędzia
+## Notebook `05_tools.py` — tools
 
 ```bash
 uv run marimo edit notebooks/05_tools.py
@@ -77,7 +77,7 @@ uv run marimo run notebooks/05_tools.py
 uv run marimo check notebooks/05_tools.py
 ```
 
-## Notebook `06_react_agent.py` — agent ReAct i `create_agent`
+## Notebook `06_react_agent.py` — ReAct agent and `create_agent`
 
 ```bash
 uv run marimo edit notebooks/06_react_agent.py
@@ -91,9 +91,9 @@ uv run marimo run notebooks/06_react_agent.py
 uv run marimo check notebooks/06_react_agent.py
 ```
 
-Wspólne narzędzia do obsługi klienta: `notebooks/support_tools.py`.
+Shared customer support tools: `notebooks/support_tools.py`.
 
-## Notebook `07_middleware.py` — warstwa pośrednia i udział człowieka (HITL)
+## Notebook `07_middleware.py` — middleware and human-in-the-loop (HITL)
 
 ```bash
 uv run marimo edit notebooks/07_middleware.py
@@ -121,18 +121,18 @@ uv run marimo run notebooks/08_mcp.py
 uv run marimo check notebooks/08_mcp.py
 ```
 
-### MCP: serwer Keycloak (`notebooks/keycloak_mcp_server.py`)
+### MCP: Keycloak server (`notebooks/keycloak_mcp_server.py`)
 
 ```bash
-# interaktywny MCP Inspector w przeglądarce (wymaga Node.js)
+# interactive MCP Inspector in the browser (requires Node.js)
 uv run fastmcp dev inspector notebooks/keycloak_mcp_server.py
 
-# sam serwer (stdio, uruchamiany przez klienta MCP)
+# standalone server (stdio, launched by the MCP client)
 uv run python notebooks/keycloak_mcp_server.py
 ```
-Wymaga w `.env`: `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET` (klient z kontem serwisowym i rolą `view-clients`).
+Requires `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, and `KEYCLOAK_CLIENT_SECRET` in `.env` (a client with a service account and the `view-clients` role).
 
-## Notebook `09_memory.py` — pamięć: checkpointer i store
+## Notebook `09_memory.py` — memory: checkpointer and store
 
 ```bash
 uv run marimo edit notebooks/09_memory.py
@@ -146,7 +146,7 @@ uv run marimo run notebooks/09_memory.py
 uv run marimo check notebooks/09_memory.py
 ```
 
-## Notebook `10_rag.py` — generowanie odpowiedzi wspomagane wyszukiwaniem (RAG)
+## Notebook `10_rag.py` — retrieval-augmented generation (RAG)
 
 ```bash
 uv run marimo edit notebooks/10_rag.py
@@ -160,7 +160,7 @@ uv run marimo run notebooks/10_rag.py
 uv run marimo check notebooks/10_rag.py
 ```
 
-## Notebook `11_langgraph.py` — LangGraph: teoria
+## Notebook `11_langgraph.py` — LangGraph: theory
 
 ```bash
 uv run marimo edit notebooks/11_langgraph.py

@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 4. Tools and agents
+    # 5. Tools
 
     ## Creating custom tools
     """)
@@ -152,7 +152,7 @@ def _(get_bank_payments, get_order_status):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -257,7 +257,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -457,7 +457,7 @@ def _(mo):
     - The model may ask for **several tools at once** or for another one after seeing a result.
     - Repeating "ask → run tools → ask again" until there are no more `tool_calls` is exactly what an **agent** does.
 
-    **Next:** ReAct and `create_agent`, the loop done for us (next notebook).
+    **Next:** ReAct and `create_agent`, the loop done for us.
     """)
     return
 

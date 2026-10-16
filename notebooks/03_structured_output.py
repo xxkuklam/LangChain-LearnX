@@ -58,9 +58,7 @@ def _():
         """A customer support ticket extracted from a message."""
 
         customer: str = Field(description="Full name of the customer")
-        topic: Literal["billing", "technical", "account", "other"] = Field(
-            description="Main topic of the message"
-        )
+        topic: Literal["billing", "technical", "account", "other"] = Field(description="Main topic of the message")
         amount: float | None = Field(default=None, description="Amount in NOK, if mentioned")
         urgent: bool = Field(description="True if the customer sounds upset or the issue blocks them")
 
@@ -78,7 +76,7 @@ def _(SupportTicket):
     )
 
     model = init_chat_model(MODEL)
-    structured_model = model.with_structured_output(SupportTicket)  # the only new line
+    structured_model = model.with_structured_output(SupportTicket)  # 'with_structured_output' returns a model wrapper that returns outputs formatted to match the given schema
 
     ticket = structured_model.invoke(MESSAGE)
 
@@ -87,7 +85,7 @@ def _(SupportTicket):
     print(ticket)
     print(ticket.topic, "|", ticket.amount, "|", ticket.urgent)
     print(ticket.model_dump())  # plain dict, ready for JSON / database
-    return MESSAGE, init_chat_model, ticket
+    return MESSAGE, init_chat_model
 
 
 @app.cell(hide_code=True)
@@ -113,7 +111,7 @@ def _(MESSAGE, SupportTicket, init_chat_model):
 
 
 @app.cell
-def _(SupportTicket, ticket):
+def _(SupportTicket):
     # Validation: Pydantic rejects data that does not match the schema
     from pydantic import ValidationError
 
@@ -121,10 +119,6 @@ def _(SupportTicket, ticket):
         SupportTicket(customer="Bob", topic="shipping", urgent=False)  # "shipping" is not allowed
     except ValidationError as e:
         print(e.errors()[0]["msg"])
-
-    # The result is a normal object: use it in code
-    if ticket.urgent:
-        print(f"Escalate ticket for {ticket.customer}")
     return
 
 

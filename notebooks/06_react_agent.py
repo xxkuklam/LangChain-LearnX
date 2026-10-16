@@ -14,7 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 4. Tools and agents
+    # 6. ReAct agents
 
     ## ReAct and `create_agent`
     """)
