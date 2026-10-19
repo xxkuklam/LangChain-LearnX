@@ -1538,7 +1538,7 @@ def _(mo):
 
 
 @app.cell
-def _(END, START, StateGraph, llm, mo):
+def _(START, StateGraph, llm, mo):
     from langchain_core.messages import SystemMessage
     from langgraph.graph import MessagesState
     from langgraph.prebuilt import ToolNode, tools_condition
@@ -1571,7 +1571,7 @@ def _(END, START, StateGraph, llm, mo):
             print(_message.type.upper() + ":", _message.text)
 
     mo.mermaid(graph_react.get_graph().draw_mermaid())
-    return (graph_react,)
+    return
 
 
 @app.cell(hide_code=True)

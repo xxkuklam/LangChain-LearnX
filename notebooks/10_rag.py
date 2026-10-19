@@ -302,7 +302,7 @@ def _(mo):
     A **retriever is the standard interface "question in, relevant documents out"**.
 
     ```python
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3}) # returns a VectorStoreRetriever instance
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
     docs = retriever.invoke("Can I return a product after 30 days?")     # -> list[Document]
     ```
@@ -636,13 +636,13 @@ def _(RecursiveCharacterTextSplitter):
     splitter_overlap = RecursiveCharacterTextSplitter(chunk_size=150, chunk_overlap=30)
 
     print("chunk_overlap=0:")
-    for _text in splitter_no_overlap.split_text(text_overview):
-        print("  ", repr(_text))
+    for idx, _text in enumerate(splitter_no_overlap.split_text(text_overview)):
+        print(f"  {idx}.", repr(_text))
 
     print()
     print("chunk_overlap=30:")
-    for _text in splitter_overlap.split_text(text_overview):
-        print("  ", repr(_text))
+    for idx, _text in enumerate(splitter_overlap.split_text(text_overview)):
+        print(f"  {idx}.", repr(_text))
     return
 
 
@@ -786,13 +786,14 @@ def _(mo):
     return
 
 
-@app.cell
-def _(chunk_vectors, chunks, embeddings):
+app._unparsable_cell(
+    r"""
     question_1 = "Can I use the invisible cap in the rain?"
 
     question_vector_1 = embeddings.embed_query(question_1)
+    print(len(question_vector_1))
 
-    scores_1 = [sum(q * c for q, c in zip(question_vector_1, vector)) for vector in chunk_vectors]
+        scores_1 = [sum(q * c for q, c in zip(question_vector_1, vector)) for vector in chunk_vectors]
 
     ranking_1 = sorted(zip(scores_1, chunks), key=lambda pair: pair[0], reverse=True)
 
@@ -800,7 +801,9 @@ def _(chunk_vectors, chunks, embeddings):
     print()
     for _score, _chunk in ranking_1[:3]:
         print(f"{_score:.3f} | {_chunk.metadata['source']} | {_chunk.page_content[:70]!r}")
-    return
+    """,
+    name="_"
+)
 
 
 @app.cell(hide_code=True)
@@ -1040,9 +1043,9 @@ def _(mo):
 @app.cell
 def _(vector_store):
     retriever = vector_store.as_retriever(
-        search_type="similarity",
-        search_kwargs={"k": 3},
-    )
+            search_type="similarity",
+            search_kwargs={"k": 3},
+        )
 
     print("type:", type(retriever).__name__)
     return (retriever,)
