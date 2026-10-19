@@ -302,7 +302,7 @@ def _(mo):
     A **retriever is the standard interface "question in, relevant documents out"**.
 
     ```python
-    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 3}) # returns a VectorStoreRetriever instance
 
     docs = retriever.invoke("Can I return a product after 30 days?")     # -> list[Document]
     ```

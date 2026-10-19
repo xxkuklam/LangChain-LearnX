@@ -39,7 +39,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -229,7 +229,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""

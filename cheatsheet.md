@@ -126,7 +126,9 @@ uv run marimo check notebooks/08_mcp.py
 ```bash
 # interactive MCP Inspector in the browser (requires Node.js)
 uv run fastmcp dev inspector notebooks/keycloak_mcp_server.py
+```
 
+```bash
 # standalone server (stdio, launched by the MCP client)
 uv run python notebooks/keycloak_mcp_server.py
 ```

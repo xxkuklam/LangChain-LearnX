@@ -57,7 +57,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -137,7 +137,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -463,7 +463,7 @@ def _(mo):
 @app.cell
 def _(Context, agent_long_term):
     result_6 = agent_long_term.invoke(
-        {"messages": [{"role": "user", "content": "I love black metal. Please keep your answers to two sentences."}]},
+        {"messages": [{"role": "user", "content": "I love metal. Please keep your answers to two sentences."}]},
         {"configurable": {"thread_id": "anne-monday"}},
         context=Context(user_id="anne"),
     )

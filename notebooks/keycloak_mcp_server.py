@@ -4,7 +4,7 @@ list the realms and list the clients of a realm (with their 'Access settings').
 Run standalone (stdio transport, started by an MCP client):
     uv run python notebooks/keycloak_mcp_server.py
 Inspect it interactively:
-    uv run mcp dev notebooks/keycloak_mcp_server.py
+    uv run fastmcp dev inspector notebooks/keycloak_mcp_server.py
 """
 
 import os

@@ -161,7 +161,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -297,8 +297,8 @@ def _():
     from langchain.agents import create_agent
     from langchain.mcp import MCPAdapter
 
-    MODEL = "anthropic:claude-opus-5-5"
-    # MODEL = "openai:gpt-5.4-mini"  # cheaper and faster, but a less precise review
+    # MODEL = "anthropic:claude-opus-5-5"
+    MODEL = "openai:gpt-5.4-mini"  # cheaper and faster, but a less precise review
     SERVER = Path(__file__).parent / "keycloak_mcp_server.py"
     return MCPAdapter, MODEL, SERVER, create_agent
 
