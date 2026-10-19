@@ -707,6 +707,13 @@ def _(mo):
 
 @app.cell
 def _(Literal, TypedDict):
+    # Node names in one place: used by routers, Command and add_node / add_edge
+    CLASSIFY_NODE_NAME = "classify"
+    BILLING_REPLY_NODE_NAME = "billing_reply"
+    TECHNICAL_REPLY_NODE_NAME = "technical_reply"
+    ESCALATE_NODE_NAME = "escalate"
+
+
     class TicketState(TypedDict):
         question: str
         category: str
@@ -734,14 +741,18 @@ def _(Literal, TypedDict):
         return {"answer": "A human agent will contact you today."}
 
 
-    def route_by_category(state: TicketState) -> Literal["billing_reply", "technical_reply", "escalate"]:
+    def route_by_category(state: TicketState) -> Literal[BILLING_REPLY_NODE_NAME, TECHNICAL_REPLY_NODE_NAME, ESCALATE_NODE_NAME]:
         if state["category"] == "billing":
-            return "billing_reply"
+            return BILLING_REPLY_NODE_NAME
         if state["category"] == "technical":
-            return "technical_reply"
-        return "escalate"
+            return TECHNICAL_REPLY_NODE_NAME
+        return ESCALATE_NODE_NAME
 
     return (
+        BILLING_REPLY_NODE_NAME,
+        CLASSIFY_NODE_NAME,
+        ESCALATE_NODE_NAME,
+        TECHNICAL_REPLY_NODE_NAME,
         TicketState,
         billing_reply,
         classify_rules,
@@ -753,9 +764,13 @@ def _(Literal, TypedDict):
 
 @app.cell
 def _(
+    BILLING_REPLY_NODE_NAME,
+    CLASSIFY_NODE_NAME,
     END,
+    ESCALATE_NODE_NAME,
     START,
     StateGraph,
+    TECHNICAL_REPLY_NODE_NAME,
     TicketState,
     billing_reply,
     classify_rules,
@@ -764,16 +779,16 @@ def _(
     technical_reply,
 ):
     builder_rules = StateGraph(TicketState)
-    builder_rules.add_node("classify", classify_rules)
-    builder_rules.add_node("billing_reply", billing_reply)
-    builder_rules.add_node("technical_reply", technical_reply)
-    builder_rules.add_node("escalate", escalate)
+    builder_rules.add_node(CLASSIFY_NODE_NAME, classify_rules)
+    builder_rules.add_node(BILLING_REPLY_NODE_NAME, billing_reply)
+    builder_rules.add_node(TECHNICAL_REPLY_NODE_NAME, technical_reply)
+    builder_rules.add_node(ESCALATE_NODE_NAME, escalate)
 
-    builder_rules.add_edge(START, "classify")
-    builder_rules.add_conditional_edges("classify", route_by_category)
-    builder_rules.add_edge("billing_reply", END)
-    builder_rules.add_edge("technical_reply", END)
-    builder_rules.add_edge("escalate", END)
+    builder_rules.add_edge(START, CLASSIFY_NODE_NAME)
+    builder_rules.add_conditional_edges(CLASSIFY_NODE_NAME, route_by_category)
+    builder_rules.add_edge(BILLING_REPLY_NODE_NAME, END)
+    builder_rules.add_edge(TECHNICAL_REPLY_NODE_NAME, END)
+    builder_rules.add_edge(ESCALATE_NODE_NAME, END)
 
     graph_rules = builder_rules.compile()
     return (graph_rules,)
@@ -843,9 +858,13 @@ def _(Literal, MODEL, TicketState):
 
 @app.cell
 def _(
+    BILLING_REPLY_NODE_NAME,
+    CLASSIFY_NODE_NAME,
     END,
+    ESCALATE_NODE_NAME,
     START,
     StateGraph,
+    TECHNICAL_REPLY_NODE_NAME,
     TicketState,
     billing_reply,
     classify_llm,
@@ -854,16 +873,16 @@ def _(
     technical_reply,
 ):
     builder_llm = StateGraph(TicketState)
-    builder_llm.add_node("classify", classify_llm)  # the only difference
-    builder_llm.add_node("billing_reply", billing_reply)
-    builder_llm.add_node("technical_reply", technical_reply)
-    builder_llm.add_node("escalate", escalate)
+    builder_llm.add_node(CLASSIFY_NODE_NAME, classify_llm)  # the only difference
+    builder_llm.add_node(BILLING_REPLY_NODE_NAME, billing_reply)
+    builder_llm.add_node(TECHNICAL_REPLY_NODE_NAME, technical_reply)
+    builder_llm.add_node(ESCALATE_NODE_NAME, escalate)
 
-    builder_llm.add_edge(START, "classify")
-    builder_llm.add_conditional_edges("classify", route_by_category)
-    builder_llm.add_edge("billing_reply", END)
-    builder_llm.add_edge("technical_reply", END)
-    builder_llm.add_edge("escalate", END)
+    builder_llm.add_edge(START, CLASSIFY_NODE_NAME)
+    builder_llm.add_conditional_edges(CLASSIFY_NODE_NAME, route_by_category)
+    builder_llm.add_edge(BILLING_REPLY_NODE_NAME, END)
+    builder_llm.add_edge(TECHNICAL_REPLY_NODE_NAME, END)
+    builder_llm.add_edge(ESCALATE_NODE_NAME, END)
 
     graph_llm = builder_llm.compile()
     return (graph_llm,)
@@ -897,26 +916,36 @@ def _(mo):
 
 
 @app.cell
-def _(Literal, TicketState):
+def _(
+    BILLING_REPLY_NODE_NAME,
+    ESCALATE_NODE_NAME,
+    Literal,
+    TECHNICAL_REPLY_NODE_NAME,
+    TicketState,
+):
     from langgraph.types import Command
 
 
-    def classify_command(state: TicketState) -> Command[Literal["billing_reply", "technical_reply", "escalate"]]:
+    def classify_command(state: TicketState) -> Command[Literal[BILLING_REPLY_NODE_NAME, TECHNICAL_REPLY_NODE_NAME, ESCALATE_NODE_NAME]]:
         text = state["question"].lower()
         if "invoice" in text or "refund" in text or "payment" in text:
-            return Command(update={"category": "billing"}, goto="billing_reply")
+            return Command(update={"category": "billing"}, goto=BILLING_REPLY_NODE_NAME)
         if "error" in text or "crash" in text or "not working" in text:
-            return Command(update={"category": "technical"}, goto="technical_reply")
-        return Command(update={"category": "other"}, goto="escalate")
+            return Command(update={"category": "technical"}, goto=TECHNICAL_REPLY_NODE_NAME)
+        return Command(update={"category": "other"}, goto=ESCALATE_NODE_NAME)
 
     return (classify_command,)
 
 
 @app.cell
 def _(
+    BILLING_REPLY_NODE_NAME,
+    CLASSIFY_NODE_NAME,
     END,
+    ESCALATE_NODE_NAME,
     START,
     StateGraph,
+    TECHNICAL_REPLY_NODE_NAME,
     TicketState,
     billing_reply,
     classify_command,
@@ -924,15 +953,15 @@ def _(
     technical_reply,
 ):
     builder_command = StateGraph(TicketState)
-    builder_command.add_node("classify", classify_command)
-    builder_command.add_node("billing_reply", billing_reply)
-    builder_command.add_node("technical_reply", technical_reply)
-    builder_command.add_node("escalate", escalate)
+    builder_command.add_node(CLASSIFY_NODE_NAME, classify_command)
+    builder_command.add_node(BILLING_REPLY_NODE_NAME, billing_reply)
+    builder_command.add_node(TECHNICAL_REPLY_NODE_NAME, technical_reply)
+    builder_command.add_node(ESCALATE_NODE_NAME, escalate)
 
-    builder_command.add_edge(START, "classify")  # no add_conditional_edges: the Command decides
-    builder_command.add_edge("billing_reply", END)
-    builder_command.add_edge("technical_reply", END)
-    builder_command.add_edge("escalate", END)
+    builder_command.add_edge(START, CLASSIFY_NODE_NAME)  # no add_conditional_edges: the Command decides
+    builder_command.add_edge(BILLING_REPLY_NODE_NAME, END)
+    builder_command.add_edge(TECHNICAL_REPLY_NODE_NAME, END)
+    builder_command.add_edge(ESCALATE_NODE_NAME, END)
 
     graph_command = builder_command.compile()
     return (graph_command,)
@@ -1086,7 +1115,7 @@ def _(END, Literal, START, StateGraph, TypedDict, llm, mo):
 
 
     def route_after_critique(state: LoopState) -> Literal["write", "__end__"]:
-        if state["feedback"] == "" or state["attempts"] >= 3:  # approved, or out of attempts
+        if state["feedback"] == "" or state["attempts"] >= 5:  # approved, or out of attempts
             return END
         return "write"
 
