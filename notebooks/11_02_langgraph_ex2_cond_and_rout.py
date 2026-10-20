@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 2 of 9: conditions and routing
+    # 11.2 LangGraph
     """)
     return
 
@@ -40,19 +38,13 @@ def _(mo):
     mo.md(r"""
     ## Example 2: conditions and routing
 
-    A real fork: a support ticket goes to a **different branch** depending on its category.
+    A support ticket goes to a **different branch** depending on its category.
 
     ```text
     START -> classify -> billing_reply   -> END
                       -> technical_reply -> END
                       -> escalate        -> END
     ```
-
-    We build the same graph three times. Only **who decides** changes:
-
-    1. **Rules** (plain Python): fast, free, predictable.
-    2. **An LLM** classifies, the router is still code.
-    3. **`Command`**: the node itself says where to go next.
     """)
     return
 
@@ -208,12 +200,13 @@ def _(Literal, MODEL, TicketState):
 
 
     def classify_llm(state: TicketState) -> dict:
+        print(f"classify_llm called with ticket question: {state["question"]}.")
         result = model_classifier.invoke(
             "Classify this support ticket as billing, technical or other: " + state["question"]
         )
         return {"category": result.category}
 
-    return Category, classify_llm, init_chat_model
+    return (classify_llm,)
 
 
 @app.cell
@@ -252,9 +245,11 @@ def _(
 def _(graph_llm):
     result_6 = graph_llm.invoke({"question": "I was charged twice for the same order"})
     print(result_6["category"], "->", result_6["answer"])
+    print("---")
 
     result_7 = graph_llm.invoke({"question": "The app is not working since the update"})
     print(result_7["category"], "->", result_7["answer"])
+    print("---")
 
     result_8 = graph_llm.invoke({"question": "My anti-gravity boots flew away!"})
     print(result_8["category"], "->", result_8["answer"])
@@ -271,6 +266,8 @@ def _(mo):
     ### Version 3: `Command`: the node chooses the next step
 
     Instead of a separate router, a node can return a **`Command`**: a state update **and** the name of the next node in one object.
+
+    [docs: Command](https://reference.langchain.com/python/langgraph-sdk/schema/Command)
     """)
     return
 

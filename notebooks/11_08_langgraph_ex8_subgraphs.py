@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 8 of 9: subgraphs
+    # 11.8 LangGraph
     """)
     return
 
@@ -34,7 +32,7 @@ def _():
 
     MODEL = "openai:gpt-5.4-mini"
     llm = init_chat_model(MODEL)
-    return END, Literal, START, StateGraph, TypedDict, llm
+    return END, START, StateGraph, TypedDict, llm
 
 
 @app.cell(hide_code=True)
@@ -55,19 +53,23 @@ def _(mo):
 
 @app.cell
 def _(END, START, StateGraph, TypedDict, llm, mo):
+    import operator
+    from typing import Annotated
+
+
     # --- The subgraph: a small, reusable quality check with its own two nodes ---
     class CheckState(TypedDict):
         reply: str
-        issues: list[str]
+        issues: Annotated[list[str], operator.add]  # reducer: each check appends its findings
 
 
     def check_length(state: CheckState) -> dict:
         words = len(state["reply"].split())
-        return {"issues": state["issues"] + ([f"too long: {words} words (max 50)"] if words > 50 else [])}
+        return {"issues": [f"too long: {words} words (max 50)"] if words > 50 else []}
 
 
     def check_tone(state: CheckState) -> dict:
-        return {"issues": state["issues"] + (["too many exclamation marks"] if "!" in state["reply"] else [])}
+        return {"issues": ["too many exclamation marks"] if "!" in state["reply"] else []}
 
 
     builder_check = StateGraph(CheckState)

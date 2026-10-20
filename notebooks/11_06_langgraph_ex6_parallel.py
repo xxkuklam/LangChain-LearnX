@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 6 of 9: parallelization
+    # 11.6 LangGraph
     """)
     return
 
@@ -34,7 +32,7 @@ def _():
 
     MODEL = "openai:gpt-5.4-mini"
     llm = init_chat_model(MODEL)
-    return END, Literal, START, StateGraph, TypedDict, llm
+    return END, START, StateGraph, TypedDict, llm
 
 
 @app.cell(hide_code=True)

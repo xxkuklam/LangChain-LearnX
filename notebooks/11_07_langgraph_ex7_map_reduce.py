@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 7 of 9: map-reduce with Send
+    # 11.7 LangGraph
     """)
     return
 
@@ -34,7 +32,7 @@ def _():
 
     MODEL = "openai:gpt-5.4-mini"
     llm = init_chat_model(MODEL)
-    return END, Literal, START, StateGraph, TypedDict, llm
+    return END, START, StateGraph, TypedDict, llm
 
 
 @app.cell(hide_code=True)
@@ -49,6 +47,8 @@ def _(mo):
 
     - **Map:** a router returns a list of **`Send("node", input)`**: one call of the node **per item**, each with its **own input**.
     - **Reduce:** the results land in one list (reducer `operator.add`), then a single node combines them.
+
+    [docs: Send](https://reference.langchain.com/python/langgraph/types/Send)
     """)
     return
 
@@ -120,6 +120,8 @@ def _(mo):
     - The **reduce** node runs once, after all map calls finished, and sees the whole list.
     - The diagram shows one box for the map node, although it ran N times.
     - Use it for: summarizing many documents, scoring many candidates, calling an API per item.
+
+    [read: Command & Send](https://docs.galileo.ai/sdk-api/third-party-integrations/langchain/command-and-send)
     """)
     return
 

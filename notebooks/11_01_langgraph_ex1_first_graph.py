@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 1 of 9: the first graph
+    # 11.1 LangGraph
     """)
     return
 
@@ -58,7 +56,7 @@ def _():
         category: str
         answer: str
 
-    return END, Literal, START, State, StateGraph, TypedDict
+    return END, Literal, START, State, StateGraph
 
 
 @app.cell(hide_code=True)
@@ -75,6 +73,7 @@ def _(mo):
 @app.cell
 def _(END, Literal, State):
     def classify(state: State) -> dict:  # a node: state in, partial update out
+    
         return {"category": "billing"}
 
 
@@ -171,7 +170,7 @@ def _():
     MODEL = "openai:gpt-5.4-mini"
 
     agent = create_agent(MODEL, tools=[])
-    return MODEL, agent
+    return (agent,)
 
 
 @app.cell

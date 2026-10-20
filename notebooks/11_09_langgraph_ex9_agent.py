@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 9 of 9: an agent as a graph
+    # 11.9 LangGraph
     """)
     return
 

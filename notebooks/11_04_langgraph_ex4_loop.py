@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 4 of 9: a loop (write and critique)
+    # 11.4 LangGraph
     """)
     return
 

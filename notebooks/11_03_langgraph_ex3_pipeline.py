@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 3 of 9: a pipeline of LLM nodes
+    # 11.3 LangGraph
     """)
     return
 
@@ -101,7 +99,7 @@ def _(Category, END, MODEL, START, StateGraph, TypedDict, init_chat_model, mo):
     print("REPLY:   ", result_10["reply"])
 
     mo.mermaid(graph_pipeline.get_graph().draw_mermaid())
-    return (llm,)
+    return
 
 
 if __name__ == "__main__":

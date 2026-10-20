@@ -14,9 +14,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    # 11. LangGraph
-
-    ## Example 5 of 9: generate and validate
+    # 11.5 LangGraph
     """)
     return
 

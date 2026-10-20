@@ -100,7 +100,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
@@ -177,6 +177,7 @@ def _(mo):
         steps: Annotated[list[str], add]                      # new items are appended
         messages: Annotated[list[AnyMessage], add_messages]   # appended and merged by message id
     ```
+    [docs: add_messages](https://reference.langchain.com/python/langgraph/graph/message/add_messages)
 
     `MessagesState` is a ready-made state with a `messages` key and the `add_messages` reducer. It is what agents use.
     """)
@@ -190,11 +191,6 @@ def _(mo):
     ## Reducers in pictures
 
     Two nodes both write to the same key. What is in the state afterwards?
-
-    | Key | Reducer | Node A returns | Node B returns | Result |
-    |---|---|---|---|---|
-    | `category` | none (replace) | `"billing"` | `"urgent"` | `"urgent"` (the last write wins) |
-    | `steps` | `add` (append) | `["classified"]` | `["replied"]` | `["classified", "replied"]` |
 
     Without a reducer, **parallel nodes writing to the same key** would be a conflict. With a reducer their results are combined. We use this in the parallelization and map-reduce examples.
     """),
@@ -315,7 +311,7 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
+@app.cell(hide_code=True, expand_output=True)
 def _(mo):
     mo.vstack([
         mo.md(r"""
