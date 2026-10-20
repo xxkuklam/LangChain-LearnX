@@ -786,14 +786,14 @@ def _(mo):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(chunk_vectors, chunks, embeddings):
     question_1 = "Can I use the invisible cap in the rain?"
 
     question_vector_1 = embeddings.embed_query(question_1)
     print(len(question_vector_1))
 
-        scores_1 = [sum(q * c for q, c in zip(question_vector_1, vector)) for vector in chunk_vectors]
+    scores_1 = [sum(q * c for q, c in zip(question_vector_1, vector)) for vector in chunk_vectors]
 
     ranking_1 = sorted(zip(scores_1, chunks), key=lambda pair: pair[0], reverse=True)
 
@@ -801,9 +801,7 @@ app._unparsable_cell(
     print()
     for _score, _chunk in ranking_1[:3]:
         print(f"{_score:.3f} | {_chunk.metadata['source']} | {_chunk.page_content[:70]!r}")
-    """,
-    name="_"
-)
+    return
 
 
 @app.cell(hide_code=True)

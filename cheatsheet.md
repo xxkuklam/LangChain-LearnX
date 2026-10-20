@@ -35,6 +35,12 @@ uv run marimo check notebooks/02_models.py
 
 Requires `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` in `.env`.
 
+Local model (Ollama):
+
+```bash
+ollama run qwen3.5
+```
+
 ## Notebook `03_structured_output.py` — structured output
 
 ```bash
@@ -211,3 +217,19 @@ Check all of them at once:
 ```bash
 uv run marimo check notebooks/11_*.py
 ```
+
+## Notebook `bonus_docling.py` — Docling: documents to structured Markdown (bonus)
+
+```bash
+uv run marimo edit notebooks/bonus_docling.py
+```
+
+```bash
+uv run marimo run notebooks/bonus_docling.py
+```
+
+```bash
+uv run marimo check notebooks/bonus_docling.py
+```
+
+The first run downloads Docling models (needs internet, takes a while). Run it once before the talk. No API key needed.

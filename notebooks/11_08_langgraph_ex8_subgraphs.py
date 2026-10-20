@@ -64,11 +64,13 @@ def _(END, START, StateGraph, TypedDict, llm, mo):
 
 
     def check_length(state: CheckState) -> dict:
+        print(f"Calling 'check_length' node of the subgraph")
         words = len(state["reply"].split())
         return {"issues": [f"too long: {words} words (max 50)"] if words > 50 else []}
 
 
     def check_tone(state: CheckState) -> dict:
+        print(f"Calling 'check_tone' node of the subgraph")
         return {"issues": ["too many exclamation marks"] if "!" in state["reply"] else []}
 
 
