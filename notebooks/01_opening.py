@@ -17,7 +17,7 @@ def _(mo):
     # Introduction to LangChain and LangGraph
 
     - Practical, code-first
-    - Every part (almost 😊) of this talk is a marimo notebook you can run yourself
+    - Every part (almost) of this talk is a marimo notebook you can run yourself
     """)
     return
 
@@ -116,8 +116,6 @@ def _(mo):
     | **LM Studio** | Desktop app with a GUI and a local API server | Trying models without the terminal |
     | **vLLM** | High-throughput server for GPUs | Production: many users at once, own servers |
     | **OpenAI / Anthropic API** | Managed engines in the provider's cloud | No hardware to run, pay per token |
-
-    **Not an engine, but often next to them: LLM gateways.** **LiteLLM** (a proxy / SDK) and **OpenRouter** (a hosted service) do not run models. They give **one API in front of many providers and engines** (routing, keys, budgets, fallbacks).
 
     **For us:** LangChain talks to all of them through the same chat model interface (section 2): `init_chat_model("ollama:...")`, or `ChatOpenAI(base_url=...)` for any OpenAI-compatible server.
     """)

@@ -36,7 +36,9 @@ uv run marimo check notebooks/02_models.py
 Requires `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` in `.env`.
 
 Local model (Ollama):
-
+```bash
+ollama serve
+```
 ```bash
 ollama run qwen3.5
 ```
