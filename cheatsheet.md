@@ -162,16 +162,52 @@ uv run marimo run notebooks/10_rag.py
 uv run marimo check notebooks/10_rag.py
 ```
 
-## Notebook `11_langgraph.py` — LangGraph: theory
+## Notebooks `11_*` — LangGraph: theory + 9 examples
+
+Theory and one notebook per example. The examples are standalone and need `OPENAI_API_KEY` in `.env`.
 
 ```bash
-uv run marimo edit notebooks/11_langgraph.py
+uv run marimo edit notebooks/11_00_langgraph_theory.py
 ```
 
 ```bash
-uv run marimo run notebooks/11_langgraph.py
+uv run marimo edit notebooks/11_01_langgraph_ex1_first_graph.py
 ```
 
 ```bash
-uv run marimo check notebooks/11_langgraph.py
+uv run marimo edit notebooks/11_02_langgraph_ex2_cond_and_rout.py
+```
+
+```bash
+uv run marimo edit notebooks/11_03_langgraph_ex3_pipeline.py
+```
+
+```bash
+uv run marimo edit notebooks/11_04_langgraph_ex4_loop.py
+```
+
+```bash
+uv run marimo edit notebooks/11_05_langgraph_ex5_generate_validate.py
+```
+
+```bash
+uv run marimo edit notebooks/11_06_langgraph_ex6_parallel.py
+```
+
+```bash
+uv run marimo edit notebooks/11_07_langgraph_ex7_map_reduce.py
+```
+
+```bash
+uv run marimo edit notebooks/11_08_langgraph_ex8_subgraphs.py
+```
+
+```bash
+uv run marimo edit notebooks/11_09_langgraph_ex9_agent.py
+```
+
+Check all of them at once:
+
+```bash
+uv run marimo check notebooks/11_*.py
 ```
