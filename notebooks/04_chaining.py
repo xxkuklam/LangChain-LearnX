@@ -233,6 +233,8 @@ def _(mo):
     - **`RunnableParallel`** runs several chains on the **same input** at the same time and returns a `dict`.
     - **`RunnableLambda`** turns any Python function into a step.
     - Every chain can draw itself: `chain.get_graph()`. This is the same drawing method we will use for LangGraph.
+
+    (docs: RunnableParallel)[https://reference.langchain.com/python/langchain-core/runnables/base/RunnableParallel]
     """)
     return
 

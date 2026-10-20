@@ -331,6 +331,7 @@ def _(OLLAMA_MODEL, QUESTION):
 
     ollama_response_2 = ollama_model_2.invoke(QUESTION)
     print("ChatOllama ->", ollama_response_2.text)
+    print("--------------------------")
     print(ollama_response_2)
     return
 
@@ -367,7 +368,6 @@ def _(mo):
 
     - **`init_chat_model("provider:model")`** gives one interface for every provider: switching is a string change.
     - **Provider classes** (`ChatOpenAI`, `ChatAnthropic`, `ChatOpenRouter`, `ChatOllama`) are the same kind of object, use them for provider-specific parameters.
-    - **Model names change often**: keep them in one constant or list them from the provider API.
     - **OpenRouter** = many cloud providers behind one API key.
     - **Ollama** = local, private, offline models with the same code.
     - **Everything else stays the same**: `invoke`, `stream`, tools and agents do not care which model is behind them.
