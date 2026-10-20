@@ -236,7 +236,7 @@ def _(issue_refund):
     print("name:       ", issue_refund.name)
     print("description:", issue_refund.description)
     print("args:       ", issue_refund.args)
-
+    print("----------")
     print(issue_refund.invoke({"order_id": "4821", "amount": 1200.0, "reason": "duplicate payment"}))
     print(issue_refund.invoke({"order_id": "4821", "amount": 5000.0, "reason": "too much"}))
     return
@@ -340,6 +340,7 @@ def _(messages, model_with_tools):
     print("content:   ", repr(ai_message_1))  # text usually empty: the model wants a tool, not to talk
     print("tool_calls:")
     for tool_call in ai_message_1.tool_calls:
+        print("--- tool_call ---")
         print("  ", tool_call)
     return (ai_message_1,)
 
